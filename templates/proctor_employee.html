@@ -30,7 +30,7 @@
       <div class="kpi__label">{{ {'day':'Today','week':'This week','month':'This month','quarter':'This quarter'}[p] }}</div>
       <div class="kpi__value num">{{ ps.counts.total }}</div>
       <div class="kpi__sub">
-        D {{ ps.counts.doctor }} &middot; C {{ ps.counts.chemist }} &middot; S {{ ps.counts.stockist }}
+        D {{ ps.counts.doctor }} &middot; C {{ ps.counts.chemist }} &middot; S {{ ps.counts.stockist }} &middot; R {{ ps.counts.retailer|default(0) }} &middot; W {{ ps.counts.wholesaler|default(0) }}
         {% if ps.achievement_pct is not none %}
           &middot; {{ '%.0f'|format(ps.achievement_pct) }}% of target
         {% endif %}

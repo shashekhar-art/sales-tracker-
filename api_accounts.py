@@ -15,7 +15,7 @@ from api import require_drupal
 bp = Blueprint("accounts", __name__, url_prefix="/api")
 
 
-ALLOWED_TYPES = ("doctor", "chemist", "stockist")
+ALLOWED_TYPES = ("doctor", "chemist", "stockist", "retailer", "wholesaler")
 
 
 def _err(msg, code=400):
@@ -76,7 +76,7 @@ def create_account(data, created_by=None):
     if not name:
         raise ValueError("name is required")
     if type_ not in ALLOWED_TYPES:
-        raise ValueError("type must be one of doctor|chemist|stockist")
+        raise ValueError("type must be one of doctor|chemist|stockist|retailer|wholesaler")
     specialty = (data.get("specialty") or "").strip() or None
     district_id = data.get("district_id") or None
     address = (data.get("address") or "").strip() or None
@@ -116,7 +116,7 @@ def update_account(account_id, data):
     if "type" in data:
         t = (data.get("type") or "").strip().lower()
         if t not in ALLOWED_TYPES:
-            raise ValueError("type must be one of doctor|chemist|stockist")
+            raise ValueError("type must be one of doctor|chemist|stockist|retailer|wholesaler")
         fields.append("type=%s")
         params.append(t)
     if "district_id" in data:

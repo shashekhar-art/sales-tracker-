@@ -84,6 +84,8 @@ class AccountForm extends FormBase {
         'doctor' => $this->t('Doctor'),
         'chemist' => $this->t('Chemist'),
         'stockist' => $this->t('Stockist'),
+        'retailer' => $this->t('Retailer'),
+        'wholesaler' => $this->t('Wholesaler'),
       ],
       '#default_value' => $existing['type'] ?? 'doctor',
       '#prefix' => '<div class="st-field">',
@@ -226,7 +228,7 @@ class AccountForm extends FormBase {
 
   public function validateForm(array &$form, FormStateInterface $form_state) {
     $type = $form_state->getValue('type');
-    if (!in_array($type, ['doctor', 'chemist', 'stockist'], TRUE)) {
+    if (!in_array($type, ['doctor', 'chemist', 'stockist', 'retailer', 'wholesaler'], TRUE)) {
       $form_state->setErrorByName('type', $this->t('Invalid type.'));
     }
     // Require a district when a region has been picked — half-classified

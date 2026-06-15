@@ -155,16 +155,18 @@ def main():
                HAVING acct_count = 0"""
         )
         empty_districts = cur.fetchall()
-        print(f"{len(empty_districts)} districts have no accounts; adding 3 each (doctor/chemist/stockist)")
+        print(f"{len(empty_districts)} districts have no accounts; adding 5 each (doctor/chemist/stockist/retailer/wholesaler)")
 
         acc_inserted = 0
-        acc_types = ["doctor", "chemist", "stockist"]
+        acc_types = ["doctor", "chemist", "stockist", "retailer", "wholesaler"]
         specialty_pool = {
             "doctor":   ["General Physician", "Pediatrician", "Cardiologist", "Dermatologist",
                          "Gynecologist", "Orthopedic Surgeon", "ENT Specialist", "Diabetologist",
                          "Neurologist", "Oncologist"],
-            "chemist":  [None],
-            "stockist": [None],
+            "chemist":    [None],
+            "stockist":   [None],
+            "retailer":   [None],
+            "wholesaler": [None],
         }
         for d in empty_districts:
             for t in acc_types:

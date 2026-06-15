@@ -25,7 +25,7 @@
     <div class="filter-chip-group" role="group" aria-label="Filter by type">
       <a class="filter-chip {% if not active_type %}filter-chip--active{% endif %}"
          href="{{ url_for('accounts_list') }}">All</a>
-      {% for t in ['doctor','chemist','stockist'] %}
+      {% for t in ['doctor','chemist','stockist','retailer','wholesaler'] %}
         <a class="filter-chip {% if active_type == t %}filter-chip--active{% endif %}"
            href="{{ url_for('accounts_list', type=t) }}">{{ t|capitalize }}</a>
       {% endfor %}

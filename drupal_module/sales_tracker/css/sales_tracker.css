@@ -1510,6 +1510,16 @@
   color: var(--c-success-fg);
   border-color: var(--c-success-border);
 }
+.sales-tracker .st-account-type-tag--retailer {
+  background: #FCE7F3;
+  color: #9D174D;
+  border-color: #FBCFE8;
+}
+.sales-tracker .st-account-type-tag--wholesaler {
+  background: #EDE9FE;
+  color: #5B21B6;
+  border-color: #DDD6FE;
+}
 
 /* ---- 18.5 Bar chart ---- */
 .sales-tracker .st-chart-bar {

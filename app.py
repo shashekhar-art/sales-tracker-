@@ -282,7 +282,7 @@ def dashboard():
         """,
         (session["user_id"], start, end),
     )
-    today_metrics = {"doctor": 0, "chemist": 0, "stockist": 0, "total": 0}
+    today_metrics = {"doctor": 0, "chemist": 0, "stockist": 0, "retailer": 0, "wholesaler": 0, "total": 0}
     for r in type_rows or []:
         if r["account_type"] in today_metrics:
             today_metrics[r["account_type"]] = int(r["cnt"])

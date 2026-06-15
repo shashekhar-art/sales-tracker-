@@ -75,7 +75,7 @@
                 {% endif %}
               </td>
               <td data-label="Type">
-                {% set ttone = a.type == 'doctor' ? 'doctor' : (a.type == 'chemist' ? 'chemist' : 'stockist') %}
+                {% set ttone = a.type in ['doctor','chemist','stockist','retailer','wholesaler'] ? a.type : 'stockist' %}
                 <span class="st-account-type-tag st-account-type-tag--{{ ttone }}">
                   {% if a.type == 'doctor' %}
                     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75"

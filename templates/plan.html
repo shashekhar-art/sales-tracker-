@@ -60,7 +60,7 @@
       <div class="filter-chip-group" role="group" aria-label="Filter by type">
         <button type="button" class="filter-chip filter-chip--active" data-type=""
                 onclick="setTypeFilter(this, '')">All</button>
-        {% for t in ['doctor','chemist','stockist'] %}
+        {% for t in ['doctor','chemist','stockist','retailer','wholesaler'] %}
           <button type="button" class="filter-chip" data-type="{{ t }}"
                   onclick="setTypeFilter(this, '{{ t }}')">{{ t|capitalize }}</button>
         {% endfor %}

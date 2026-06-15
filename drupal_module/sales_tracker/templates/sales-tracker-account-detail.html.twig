@@ -8,7 +8,7 @@
         <h1 class="st-card__title">{{ account.name }}</h1>
       </div>
       <div>
-        {% set ttone = account.type == 'doctor' ? 'doctor' : (account.type == 'chemist' ? 'chemist' : 'stockist') %}
+        {% set ttone = account.type in ['doctor','chemist','stockist','retailer','wholesaler'] ? account.type : 'stockist' %}
         <span class="st-account-type-tag st-account-type-tag--{{ ttone }}">{{ account.type|capitalize }}</span>
       </div>
     </header>

@@ -289,7 +289,7 @@ def list_visits():
 @require_drupal
 def list_today_visits():
     rows = fetch_today_visits(g.employee["id"])
-    counts = {"doctor": 0, "chemist": 0, "stockist": 0, "total": 0}
+    counts = {"doctor": 0, "chemist": 0, "stockist": 0, "retailer": 0, "wholesaler": 0, "total": 0}
     for r in rows:
         if r.get("checkin_time"):
             r["checkin_time"] = r["checkin_time"].isoformat()

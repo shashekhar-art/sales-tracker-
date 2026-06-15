@@ -112,7 +112,7 @@
     </section>
 
     {# === v2: today's visit-type counts strip ====================== #}
-    {% set tc = today_counts|default({'doctor': 0, 'chemist': 0, 'stockist': 0, 'total': 0}) %}
+    {% set tc = today_counts|default({'doctor': 0, 'chemist': 0, 'stockist': 0, 'retailer': 0, 'wholesaler': 0, 'total': 0}) %}
     <div class="st-period-summary" aria-label="Today's visit-type counts">
       <div class="st-card st-stat-tile">
         <span class="st-stat-tile__icon">
@@ -196,7 +196,7 @@
               <div>
                 <a href="{{ path('sales_tracker.accounts.view', {id: aid}) }}" class="st-cell-place__name">{{ aname }}</a>
                 {% if atype %}
-                  {% set ttone = atype == 'doctor' ? 'doctor' : (atype == 'chemist' ? 'chemist' : 'stockist') %}
+                  {% set ttone = atype in ['doctor','chemist','stockist','retailer','wholesaler'] ? atype : 'stockist' %}
                   <span class="st-account-type-tag st-account-type-tag--{{ ttone }}">{{ atype|capitalize }}</span>
                 {% endif %}
                 {% if alat is not null and alon is not null %}

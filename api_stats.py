@@ -48,7 +48,7 @@ def fetch_period_counts(employee_id, start_dt, end_dt):
         """,
         (employee_id, start_dt, end_dt),
     )
-    counts = {"doctor": 0, "chemist": 0, "stockist": 0}
+    counts = {"doctor": 0, "chemist": 0, "stockist": 0, "retailer": 0, "wholesaler": 0}
     for r in rows or []:
         if r["account_type"] in counts:
             counts[r["account_type"]] = int(r["cnt"])

@@ -35,7 +35,7 @@
 
   {# Period summary KPI strip #}
   {% set total = stats.total_visits|default(stats.counts.total|default(0)) %}
-  {% set by_type = stats.by_type|default(stats.counts|default({'doctor': 0, 'chemist': 0, 'stockist': 0})) %}
+  {% set by_type = stats.by_type|default(stats.counts|default({'doctor': 0, 'chemist': 0, 'stockist': 0, 'retailer': 0, 'wholesaler': 0})) %}
   {% set by_outcome = stats.by_outcome|default({'met': 0, 'not_met': 0, 'rescheduled': 0}) %}
   {% set target = stats.target.target_count|default(0) %}
   {% set achievement = (target > 0) ? (total * 100 / target) : 0 %}
@@ -92,12 +92,14 @@
         <span class="st-card__sub">{{ periods[period]|default('Period') }}</span>
       </header>
 
-      {% set max_val = [by_type.doctor|default(0), by_type.chemist|default(0), by_type.stockist|default(0)]|reduce((m, v) => v > m ? v : m, 1) %}
+      {% set max_val = [by_type.doctor|default(0), by_type.chemist|default(0), by_type.stockist|default(0), by_type.retailer|default(0), by_type.wholesaler|default(0)]|reduce((m, v) => v > m ? v : m, 1) %}
       <div class="st-chart-bar">
         {% set rows = [
-          {'label': 'Doctors',   'val': by_type.doctor|default(0),   'color': 'var(--c-accent)'},
-          {'label': 'Chemists',  'val': by_type.chemist|default(0),  'color': 'var(--c-primary)'},
-          {'label': 'Stockists', 'val': by_type.stockist|default(0), 'color': 'var(--c-success)'}
+          {'label': 'Doctors',     'val': by_type.doctor|default(0),     'color': 'var(--c-accent)'},
+          {'label': 'Chemists',    'val': by_type.chemist|default(0),    'color': 'var(--c-primary)'},
+          {'label': 'Stockists',   'val': by_type.stockist|default(0),   'color': 'var(--c-success)'},
+          {'label': 'Retailers',   'val': by_type.retailer|default(0),   'color': '#EC4899'},
+          {'label': 'Wholesalers', 'val': by_type.wholesaler|default(0), 'color': '#8B5CF6'}
         ] %}
         {% for r in rows %}
           {% set pct = max_val > 0 ? (r.val * 100 / max_val) : 0 %}

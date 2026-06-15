@@ -1136,6 +1136,16 @@ td.num { font-variant-numeric: tabular-nums; }
   background: var(--c-warning-bg);
   border-color: var(--c-warning-border);
 }
+.account-type-tag--retailer {
+  color: #9D174D;
+  background: #FCE7F3;
+  border-color: #FBCFE8;
+}
+.account-type-tag--wholesaler {
+  color: #5B21B6;
+  background: #EDE9FE;
+  border-color: #DDD6FE;
+}
 
 /* ----- Bar chart (visits by type) ----- */
 .chart-bar { display: flex; flex-direction: column; gap: var(--sp-3); }

@@ -59,10 +59,12 @@ class TargetForm extends FormBase {
       '#title' => $this->t('Account type'),
       '#required' => TRUE,
       '#options' => [
-        'any' => $this->t('Any (doctor + chemist + stockist)'),
+        'any' => $this->t('Any (all account types)'),
         'doctor' => $this->t('Doctor'),
         'chemist' => $this->t('Chemist'),
         'stockist' => $this->t('Stockist'),
+        'retailer' => $this->t('Retailer'),
+        'wholesaler' => $this->t('Wholesaler'),
       ],
       '#default_value' => 'any',
       '#prefix' => '<div class="st-field">',

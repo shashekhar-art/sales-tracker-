@@ -17,7 +17,7 @@ bp = Blueprint("targets", __name__, url_prefix="/api")
 
 ALLOWED_SCOPES = ("company", "region", "district", "employee")
 ALLOWED_PERIODS = ("daily", "weekly", "monthly", "quarterly")
-ALLOWED_ACCOUNT_TYPES = ("any", "doctor", "chemist", "stockist")
+ALLOWED_ACCOUNT_TYPES = ("any", "doctor", "chemist", "stockist", "retailer", "wholesaler")
 
 
 def _err(msg, code=400):
@@ -44,7 +44,7 @@ def insert_target(data):
         raise ValueError("period_type must be one of daily|weekly|monthly|quarterly")
     account_type = (data.get("account_type") or "any").strip().lower()
     if account_type not in ALLOWED_ACCOUNT_TYPES:
-        raise ValueError("account_type must be one of any|doctor|chemist|stockist")
+        raise ValueError("account_type must be one of any|doctor|chemist|stockist|retailer|wholesaler")
     try:
         target_count = int(data.get("target_count") or 0)
     except (TypeError, ValueError):

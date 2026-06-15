@@ -80,11 +80,13 @@
     <span class="card__sub">{{ active_period|capitalize }}</span>
   </header>
 
-  {% set max_count = [c.doctor, c.chemist, c.stockist, 1] | max %}
+  {% set max_count = [c.doctor, c.chemist, c.stockist, c.retailer|default(0), c.wholesaler|default(0), 1] | max %}
   {% set bar_rows = [
-    ('Doctors',   c.doctor,   '#4F46E5'),
-    ('Chemists',  c.chemist,  '#0EA5A4'),
-    ('Stockists', c.stockist, '#F59E0B'),
+    ('Doctors',     c.doctor,             '#4F46E5'),
+    ('Chemists',    c.chemist,            '#0EA5A4'),
+    ('Stockists',   c.stockist,           '#F59E0B'),
+    ('Retailers',   c.retailer|default(0),   '#EC4899'),
+    ('Wholesalers', c.wholesaler|default(0), '#8B5CF6'),
   ] %}
 
   <div class="chart-bar" role="img" aria-label="Bar chart of visits by account type">

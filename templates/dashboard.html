@@ -198,7 +198,7 @@
         <div class="period-summary__num num">{{ ps.counts.total }}</div>
       </div>
       <div class="period-summary__delta">
-        D {{ ps.counts.doctor }} &middot; C {{ ps.counts.chemist }} &middot; S {{ ps.counts.stockist }}
+        D {{ ps.counts.doctor }} &middot; C {{ ps.counts.chemist }} &middot; S {{ ps.counts.stockist }} &middot; R {{ ps.counts.retailer|default(0) }} &middot; W {{ ps.counts.wholesaler|default(0) }}
         {% if ps.target %} &middot; target {{ ps.target.target_count }}{% endif %}
         {% if ps.achievement_pct is not none %} &middot; {{ '%.0f'|format(ps.achievement_pct) }}%{% endif %}
       </div>
