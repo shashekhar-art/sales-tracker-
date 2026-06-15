@@ -6,40 +6,27 @@
 <form method="post" class="card form-card" novalidate>
   <span class="eyebrow eyebrow--muted">Today &middot; {{ today }}</span>
   <h1>Declare today's plan</h1>
-  <p class="muted">Tell us where you'll be selling today. Coordinates are optional &mdash; tap
-    "Use my current location" to fill them from your device.</p>
+  <p class="muted">Tell us where you'll be selling today. Type the address, or tap
+    "Use my current location" and we'll fill it in for you automatically.</p>
 
   <div class="field">
     <label for="place">
-      Planned location
+      Planned address
       <span class="req" aria-hidden="true">*</span>
       <span class="req-text">(required)</span>
     </label>
     <input id="place" type="text" name="place" required
            value="{{ existing.planned_place_name if existing else '' }}"
-           placeholder="e.g. Connaught Place, Delhi">
-    <small class="field__help">The customer site or area you plan to visit.</small>
-  </div>
-
-  <div class="grid-2">
-    <div class="field field--mono">
-      <label for="lat">Latitude</label>
-      <input id="lat" type="text" name="lat" inputmode="decimal"
-             value="{{ existing.planned_lat if existing and existing.planned_lat is not none else '' }}"
-             placeholder="12.9716">
-      <small class="field__help">Decimal degrees, e.g. 12.9716</small>
-    </div>
-    <div class="field field--mono">
-      <label for="lon">Longitude</label>
-      <input id="lon" type="text" name="lon" inputmode="decimal"
-             value="{{ existing.planned_lon if existing and existing.planned_lon is not none else '' }}"
-             placeholder="77.5946">
-      <small class="field__help">Decimal degrees, e.g. 77.5946</small>
-    </div>
+           placeholder="House / Shop No., Area, City, State">
+    <small class="field__help">Type the address freely, or use the button below.</small>
+    <input id="lat" type="hidden" name="lat"
+           value="{{ existing.planned_lat if existing and existing.planned_lat is not none else '' }}">
+    <input id="lon" type="hidden" name="lon"
+           value="{{ existing.planned_lon if existing and existing.planned_lon is not none else '' }}">
   </div>
 
   <div class="field">
-    <button type="button" class="btn btn--secondary" onclick="useMyLocation()">
+    <button type="button" class="btn btn--secondary" id="useloc-btn" onclick="useMyLocation()">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75"
            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M8 14s-5-5.5-5-8.5a5 5 0 1 1 10 0c0 3-5 8.5-5 8.5z"/>
@@ -47,7 +34,7 @@
       </svg>
       Use my current location
     </button>
-    <small class="field__help">We'll fill the lat/lon fields above from your device GPS.</small>
+    <small id="useloc-status" class="field__help">Fills the address from your device GPS.</small>
   </div>
 
   <div class="field">
@@ -116,22 +103,42 @@
 </form>
 
 <script>
-function useMyLocation() {
-  if (!navigator.geolocation) { alert('Geolocation not supported by this browser.'); return; }
+async function useMyLocation() {
+  const status = document.getElementById('useloc-status');
+  const btn = document.getElementById('useloc-btn');
+  const setStatus = (t, cls) => { if (status) { status.textContent = t; status.className = 'field__help ' + (cls||''); } };
+  if (!navigator.geolocation) { setStatus('Geolocation not supported by this browser.', 'is-err'); return; }
   if (!window.isSecureContext) {
-    alert('Browser blocks geolocation on insecure pages. Use http://127.0.0.1 (current) or http://localhost.');
+    setStatus('Browser blocks geolocation on insecure pages. Use http://127.0.0.1 or http://localhost.', 'is-err');
     return;
   }
+  if (btn) btn.disabled = true;
+  setStatus('Locating you…');
   navigator.geolocation.getCurrentPosition(
-    p => {
-      document.getElementById('lat').value = p.coords.latitude.toFixed(6);
-      document.getElementById('lon').value = p.coords.longitude.toFixed(6);
+    async p => {
+      const lat = p.coords.latitude, lon = p.coords.longitude;
+      document.getElementById('lat').value = lat.toFixed(6);
+      document.getElementById('lon').value = lon.toFixed(6);
+      setStatus('Looking up address…');
+      try {
+        const r = await fetch('/api/reverse_geocode?lat=' + lat + '&lon=' + lon);
+        const j = await r.json();
+        if (j.ok && j.address) {
+          document.getElementById('place').value = j.address;
+          setStatus('Address filled — edit if needed.', 'is-ok');
+        } else {
+          setStatus('Location captured. Please type the address (lookup unavailable).', 'is-warn');
+        }
+      } catch (err) {
+        setStatus('Location captured. Please type the address (network error).', 'is-warn');
+      } finally { if (btn) btn.disabled = false; }
     },
     e => {
-      const hint = {1:'Permission denied — click the lock/location icon in the address bar and allow location for this site.',
-                    2:'Position unavailable — open Windows Settings > Privacy & security > Location and turn it ON. Wi-Fi must also be on.',
-                    3:'Timed out — try again, or enter latitude/longitude manually.'}[e.code] || 'Unknown geolocation error.';
-      alert(hint + '\n\nDetails: ' + e.message);
+      const hint = {1:'Permission denied — allow location for this site (click the lock/location icon in the address bar).',
+                    2:'Position unavailable — turn on Windows Location Services (Settings > Privacy > Location) and Wi-Fi.',
+                    3:'Timed out — try again, or type the address manually.'}[e.code] || 'Unknown geolocation error.';
+      setStatus(hint, 'is-err');
+      if (btn) btn.disabled = false;
       console.warn('Geolocation error', e);
     },
     { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }

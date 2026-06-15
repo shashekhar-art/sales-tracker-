@@ -24,6 +24,18 @@ def geocode(place: str) -> Optional[Tuple[float, float]]:
     return None
 
 
+@lru_cache(maxsize=512)
+def reverse_geocode(lat: float, lon: float) -> Optional[str]:
+    """Return a human-readable address for (lat, lon), or None on failure."""
+    try:
+        loc = _geocoder.reverse((lat, lon), zoom=18, language="en")
+        if loc and loc.address:
+            return loc.address
+    except Exception:
+        return None
+    return None
+
+
 def _coords(lat, lon, name):
     if lat is not None and lon is not None:
         return (float(lat), float(lon))

@@ -39,84 +39,41 @@
       </select>
     </div>
 
-    <div class="field">
-      <span class="field-label">Source</span>
-      <div class="segmented" role="radiogroup" aria-label="Check-in source">
-        <input type="radio" id="vsrc-manual" name="source" value="manual" checked onchange="visitToggleSource()">
-        <label for="vsrc-manual">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75"
-               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M3 13l3-1 7-7-2-2-7 7-1 3z"/>
-          </svg>
-          Manual
-        </label>
-        <input type="radio" id="vsrc-gps" name="source" value="gps" onchange="visitToggleSource()">
-        <label for="vsrc-gps">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75"
-               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <circle cx="8" cy="8" r="2"/><circle cx="8" cy="8" r="6"/>
-            <path d="M8 1v2M8 13v2M1 8h2M13 8h2"/>
-          </svg>
-          GPS
-        </label>
-      </div>
-    </div>
+    <input type="hidden" name="source" id="vsrc-mode" value="manual">
 
-    <div id="v-manual-fields">
-      <div class="field">
-        <label for="actual_place_name">Place name</label>
-        <input id="actual_place_name" type="text" name="actual_place_name"
-               placeholder="(defaults to the account name)">
-      </div>
-    </div>
-
-    <div id="v-gps-fields" style="display:none">
+    {% set _has_planned_geo = (plan is defined and plan and plan.planned_lat is defined
+                                and plan.planned_lat is not none and plan.planned_lon is not none) %}
+    {% if _has_planned_geo %}
       <div class="st-geo-section geo-section" data-account-lat-source>
-        <h3 class="st-geo-section__title geo-section__title">
-          <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
-            <path d="M8 1.5c-2.6 0-4.7 2.1-4.7 4.7 0 3.4 4.7 8.3 4.7 8.3s4.7-4.9 4.7-8.3C12.7 3.6 10.6 1.5 8 1.5z"
-                  fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
-            <circle cx="8" cy="6.2" r="1.7" fill="currentColor"/>
-          </svg>
-          Geolocation
-        </h3>
-        {% set _has_planned_geo = (plan is defined and plan and plan.planned_lat is defined
-                                    and plan.planned_lat is not none and plan.planned_lon is not none) %}
-        {% if _has_planned_geo %}
-          <p class="st-geo-callout geo-callout">
-            <span class="st-geo-callout__label geo-callout__label">Account location:</span>
-            {% with lat = plan.planned_lat, lon = plan.planned_lon,
-                    label = plan.planned_place_name|default('account') %}
-              {% include "_geo.html" %}
-            {% endwith %}
-          </p>
-        {% else %}
-          <p class="st-geo-callout geo-callout muted">
-            <span class="st-geo-callout__label geo-callout__label">Account location:</span>
-            No stored coordinates yet — capture below.
-          </p>
-        {% endif %}
+        <p class="st-geo-callout geo-callout">
+          <span class="st-geo-callout__label geo-callout__label">Account location:</span>
+          {% with lat = plan.planned_lat, lon = plan.planned_lon,
+                  label = plan.planned_place_name|default('account') %}
+            {% include "_geo.html" %}
+          {% endwith %}
+        </p>
       </div>
-      <div class="grid-2">
-        <div class="field field--mono">
-          <label for="vlat">Latitude</label>
-          <input id="vlat" type="text" name="lat" inputmode="decimal" placeholder="12.9716">
-        </div>
-        <div class="field field--mono">
-          <label for="vlon">Longitude</label>
-          <input id="vlon" type="text" name="lon" inputmode="decimal" placeholder="77.5946">
-        </div>
-      </div>
-      <div class="field">
-        <button type="button" class="btn btn--secondary" onclick="visitUseMyLocation()">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75"
-               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M8 14s-5-5.5-5-8.5a5 5 0 1 1 10 0c0 3-5 8.5-5 8.5z"/>
-            <circle cx="8" cy="5.5" r="1.8"/>
-          </svg>
-          Use my current location
-        </button>
-      </div>
+    {% endif %}
+
+    <div class="field">
+      <label for="actual_place_name">Visit address</label>
+      <input id="actual_place_name" type="text" name="actual_place_name"
+             placeholder="House / Shop No., Area, City, State (or leave blank to use account name)">
+      <small class="field__help">Type the address freely, or tap the button below to fill it from your device.</small>
+      <input id="vlat" type="hidden" name="lat">
+      <input id="vlon" type="hidden" name="lon">
+    </div>
+
+    <div class="field">
+      <button type="button" class="btn btn--secondary" id="vuseloc-btn" onclick="visitUseMyLocation()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M8 14s-5-5.5-5-8.5a5 5 0 1 1 10 0c0 3-5 8.5-5 8.5z"/>
+          <circle cx="8" cy="5.5" r="1.8"/>
+        </svg>
+        Use my current location
+      </button>
+      <small id="vuseloc-status" class="field__help">Fills the address from your device GPS.</small>
     </div>
 
     <div class="field">
@@ -194,28 +151,44 @@
 {% endif %}
 
 <script>
-function visitToggleSource() {
-  const gps = document.getElementById('vsrc-gps');
-  const isGps = gps && gps.checked;
-  document.getElementById('v-manual-fields').style.display = isGps ? 'none' : '';
-  document.getElementById('v-gps-fields').style.display    = isGps ? '' : 'none';
-}
-function visitUseMyLocation() {
-  if (!navigator.geolocation) { alert('Geolocation not supported by this browser.'); return; }
+async function visitUseMyLocation() {
+  const status = document.getElementById('vuseloc-status');
+  const btn = document.getElementById('vuseloc-btn');
+  const mode = document.getElementById('vsrc-mode');
+  const setStatus = (t, cls) => { if (status) { status.textContent = t; status.className = 'field__help ' + (cls||''); } };
+  if (!navigator.geolocation) { setStatus('Geolocation not supported by this browser.', 'is-err'); return; }
   if (!window.isSecureContext) {
-    alert('Browser blocks geolocation on insecure pages. Use http://127.0.0.1 (current) or http://localhost.');
+    setStatus('Browser blocks geolocation on insecure pages. Use http://127.0.0.1 or http://localhost.', 'is-err');
     return;
   }
+  if (btn) btn.disabled = true;
+  setStatus('Locating you…');
   navigator.geolocation.getCurrentPosition(
-    p => {
-      document.getElementById('vlat').value = p.coords.latitude.toFixed(6);
-      document.getElementById('vlon').value = p.coords.longitude.toFixed(6);
+    async p => {
+      const lat = p.coords.latitude, lon = p.coords.longitude;
+      document.getElementById('vlat').value = lat.toFixed(6);
+      document.getElementById('vlon').value = lon.toFixed(6);
+      if (mode) mode.value = 'gps';
+      setStatus('Looking up address…');
+      try {
+        const r = await fetch('/api/reverse_geocode?lat=' + lat + '&lon=' + lon);
+        const j = await r.json();
+        if (j.ok && j.address) {
+          document.getElementById('actual_place_name').value = j.address;
+          setStatus('Address filled — edit if needed.', 'is-ok');
+        } else {
+          setStatus('Location captured. Please type the address (lookup unavailable).', 'is-warn');
+        }
+      } catch (err) {
+        setStatus('Location captured. Please type the address (network error).', 'is-warn');
+      } finally { if (btn) btn.disabled = false; }
     },
     e => {
-      const hint = {1:'Permission denied — click the lock/location icon in the address bar and allow location for this site.',
-                    2:'Position unavailable — open Windows Settings > Privacy & security > Location and turn it ON. Wi-Fi must also be on.',
-                    3:'Timed out — try again, or enter latitude/longitude manually.'}[e.code] || 'Unknown geolocation error.';
-      alert(hint + '\n\nDetails: ' + e.message);
+      const hint = {1:'Permission denied — allow location for this site (click the lock/location icon in the address bar).',
+                    2:'Position unavailable — turn on Windows Location Services (Settings > Privacy > Location) and Wi-Fi.',
+                    3:'Timed out — try again, or type the address manually.'}[e.code] || 'Unknown geolocation error.';
+      setStatus(hint, 'is-err');
+      if (btn) btn.disabled = false;
       console.warn('Geolocation error', e);
     },
     { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }

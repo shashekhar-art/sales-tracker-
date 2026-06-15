@@ -89,6 +89,25 @@ def logout():
     return redirect(url_for("login"))
 
 
+@app.route("/api/reverse_geocode")
+@login_required
+def api_reverse_geocode():
+    """Turn (lat, lon) into a human-readable address for the form to display."""
+    from ai.matcher import reverse_geocode
+    from flask import jsonify
+    try:
+        lat = float(request.args.get("lat", ""))
+        lon = float(request.args.get("lon", ""))
+    except (TypeError, ValueError):
+        return jsonify({"ok": False, "error": "lat/lon required"}), 400
+    if not (-90 <= lat <= 90 and -180 <= lon <= 180):
+        return jsonify({"ok": False, "error": "lat/lon out of range"}), 400
+    address = reverse_geocode(lat, lon)
+    if not address:
+        return jsonify({"ok": False, "error": "address lookup unavailable"}), 502
+    return jsonify({"ok": True, "address": address, "lat": lat, "lon": lon})
+
+
 @app.route("/plan", methods=["GET", "POST"])
 @login_required
 def plan():

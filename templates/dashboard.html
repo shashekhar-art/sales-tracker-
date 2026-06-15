@@ -288,59 +288,27 @@
     <p class="muted" style="margin-top: 4px; margin-bottom: 24px;">Record where you actually are so we can score the match against your plan.</p>
 
     <form method="post" action="{{ url_for('checkin') }}" novalidate>
+      <input type="hidden" name="source" id="src-mode" value="manual">
+
       <div class="field">
-        <span class="field-label">Source</span>
-        <div class="segmented" role="radiogroup" aria-label="Check-in source">
-          <input type="radio" id="src-manual" name="source" value="manual" checked onchange="toggleSource()">
-          <label for="src-manual">
-            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75"
-                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M3 13l3-1 7-7-2-2-7 7-1 3z"/>
-            </svg>
-            Manual
-          </label>
-          <input type="radio" id="src-gps" name="source" value="gps" onchange="toggleSource()">
-          <label for="src-gps">
-            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75"
-                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <circle cx="8" cy="8" r="2"/><circle cx="8" cy="8" r="6"/>
-              <path d="M8 1v2M8 13v2M1 8h2M13 8h2"/>
-            </svg>
-            GPS
-          </label>
-        </div>
+        <label for="actual_place_name">Where are you now?</label>
+        <input id="actual_place_name" type="text" name="actual_place_name" required
+               placeholder="House / Shop No., Area, City, State">
+        <small class="field__help">Type the address freely, or tap the button below to fill it from your device.</small>
+        <input id="lat" type="hidden" name="lat">
+        <input id="lon" type="hidden" name="lon">
       </div>
 
-      <div id="manual-fields">
-        <div class="field">
-          <label for="actual_place_name">Where are you now?</label>
-          <input id="actual_place_name" type="text" name="actual_place_name"
-                 placeholder="e.g. Janpath, New Delhi">
-          <small class="field__help">A landmark, building, or address &mdash; we'll fuzzy-match against your plan.</small>
-        </div>
-      </div>
-
-      <div id="gps-fields" style="display:none">
-        <div class="grid-2">
-          <div class="field field--mono">
-            <label for="lat">Latitude</label>
-            <input id="lat" type="text" name="lat" inputmode="decimal" placeholder="12.9716">
-          </div>
-          <div class="field field--mono">
-            <label for="lon">Longitude</label>
-            <input id="lon" type="text" name="lon" inputmode="decimal" placeholder="77.5946">
-          </div>
-        </div>
-        <div class="field">
-          <button type="button" class="btn btn--secondary" onclick="useMyLocation()">
-            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75"
-                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M8 14s-5-5.5-5-8.5a5 5 0 1 1 10 0c0 3-5 8.5-5 8.5z"/>
-              <circle cx="8" cy="5.5" r="1.8"/>
-            </svg>
-            Use my current location
-          </button>
-        </div>
+      <div class="field">
+        <button type="button" class="btn btn--secondary" id="useloc-btn" onclick="useMyLocation()">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M8 14s-5-5.5-5-8.5a5 5 0 1 1 10 0c0 3-5 8.5-5 8.5z"/>
+            <circle cx="8" cy="5.5" r="1.8"/>
+          </svg>
+          Use my current location
+        </button>
+        <small id="useloc-status" class="field__help">Fills the address from your device GPS.</small>
       </div>
 
       <div class="form-card__footer">
@@ -575,30 +543,44 @@
 {% endif %}
 
 <script>
-function toggleSource() {
-  const gpsRadio = document.getElementById('src-gps');
-  const isGps = gpsRadio && gpsRadio.checked;
-  const m = document.getElementById('manual-fields');
-  const g = document.getElementById('gps-fields');
-  if (m) m.style.display = isGps ? 'none' : '';
-  if (g) g.style.display = isGps ? '' : 'none';
-}
-function useMyLocation() {
-  if (!navigator.geolocation) { alert('Geolocation not supported by this browser.'); return; }
+async function useMyLocation() {
+  const status = document.getElementById('useloc-status');
+  const btn = document.getElementById('useloc-btn');
+  const mode = document.getElementById('src-mode');
+  const setStatus = (t, cls) => { if (status) { status.textContent = t; status.className = 'field__help ' + (cls||''); } };
+  if (!navigator.geolocation) { setStatus('Geolocation not supported by this browser.', 'is-err'); return; }
   if (!window.isSecureContext) {
-    alert('Browser blocks geolocation on insecure pages. Use http://127.0.0.1 (current) or http://localhost.');
+    setStatus('Browser blocks geolocation on insecure pages. Use http://127.0.0.1 or http://localhost.', 'is-err');
     return;
   }
+  if (btn) btn.disabled = true;
+  setStatus('Locating you…');
   navigator.geolocation.getCurrentPosition(
-    p => {
-      document.getElementById('lat').value = p.coords.latitude.toFixed(6);
-      document.getElementById('lon').value = p.coords.longitude.toFixed(6);
+    async p => {
+      const lat = p.coords.latitude, lon = p.coords.longitude;
+      document.getElementById('lat').value = lat.toFixed(6);
+      document.getElementById('lon').value = lon.toFixed(6);
+      if (mode) mode.value = 'gps';
+      setStatus('Looking up address…');
+      try {
+        const r = await fetch('/api/reverse_geocode?lat=' + lat + '&lon=' + lon);
+        const j = await r.json();
+        if (j.ok && j.address) {
+          document.getElementById('actual_place_name').value = j.address;
+          setStatus('Address filled — edit if needed.', 'is-ok');
+        } else {
+          setStatus('Location captured. Please type the address (lookup unavailable).', 'is-warn');
+        }
+      } catch (err) {
+        setStatus('Location captured. Please type the address (network error).', 'is-warn');
+      } finally { if (btn) btn.disabled = false; }
     },
     e => {
-      const hint = {1:'Permission denied — click the lock/location icon in the address bar and allow location for this site.',
-                    2:'Position unavailable — open Windows Settings > Privacy & security > Location and turn it ON. Wi-Fi must also be on.',
-                    3:'Timed out — try again, or enter latitude/longitude manually.'}[e.code] || 'Unknown geolocation error.';
-      alert(hint + '\n\nDetails: ' + e.message);
+      const hint = {1:'Permission denied — allow location for this site (click the lock/location icon in the address bar).',
+                    2:'Position unavailable — turn on Windows Location Services (Settings > Privacy > Location) and Wi-Fi.',
+                    3:'Timed out — try again, or type the address manually.'}[e.code] || 'Unknown geolocation error.';
+      setStatus(hint, 'is-err');
+      if (btn) btn.disabled = false;
       console.warn('Geolocation error', e);
     },
     { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
