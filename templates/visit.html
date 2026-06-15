@@ -201,11 +201,25 @@ function visitToggleSource() {
   document.getElementById('v-gps-fields').style.display    = isGps ? '' : 'none';
 }
 function visitUseMyLocation() {
-  if (!navigator.geolocation) { alert('Geolocation not supported'); return; }
-  navigator.geolocation.getCurrentPosition(p => {
-    document.getElementById('vlat').value = p.coords.latitude.toFixed(6);
-    document.getElementById('vlon').value = p.coords.longitude.toFixed(6);
-  }, e => alert('Could not get location: ' + e.message));
+  if (!navigator.geolocation) { alert('Geolocation not supported by this browser.'); return; }
+  if (!window.isSecureContext) {
+    alert('Browser blocks geolocation on insecure pages. Use http://127.0.0.1 (current) or http://localhost.');
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    p => {
+      document.getElementById('vlat').value = p.coords.latitude.toFixed(6);
+      document.getElementById('vlon').value = p.coords.longitude.toFixed(6);
+    },
+    e => {
+      const hint = {1:'Permission denied — click the lock/location icon in the address bar and allow location for this site.',
+                    2:'Position unavailable — open Windows Settings > Privacy & security > Location and turn it ON. Wi-Fi must also be on.',
+                    3:'Timed out — try again, or enter latitude/longitude manually.'}[e.code] || 'Unknown geolocation error.';
+      alert(hint + '\n\nDetails: ' + e.message);
+      console.warn('Geolocation error', e);
+    },
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+  );
 }
 </script>
 {% endblock %}
