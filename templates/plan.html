@@ -140,6 +140,7 @@ async function useMyLocation() {
       setStatus(hint, 'is-err');
       if (btn) btn.disabled = false;
       console.warn('Geolocation error', e);
+      alert(hint);
     },
     { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
   );

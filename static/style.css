@@ -1147,6 +1147,14 @@ td.num { font-variant-numeric: tabular-nums; }
   border-color: #DDD6FE;
 }
 
+/* ----- Geolocation status messages (under "Use my current location") ----- */
+.field__help.is-ok    { color: #047857; font-weight: 600; }
+.field__help.is-warn  { color: #B45309; font-weight: 600; }
+.field__help.is-err   { color: #B91C1C; font-weight: 600; }
+.field__help.is-ok::before   { content: "✅  "; }
+.field__help.is-warn::before { content: "⚠️  "; }
+.field__help.is-err::before  { content: "❌  "; }
+
 /* ----- Bar chart (visits by type) ----- */
 .chart-bar { display: flex; flex-direction: column; gap: var(--sp-3); }
 .chart-bar__row {

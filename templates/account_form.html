@@ -6,7 +6,7 @@
 <form method="post" class="card form-card" novalidate>
   <span class="eyebrow eyebrow--muted">{% if existing %}Edit{% else %}New{% endif %}</span>
   <h1>{% if existing %}Edit account{% else %}Add an account{% endif %}</h1>
-  <p class="muted">Doctors, chemists, and stockists are the entities your team visits.</p>
+  <p class="muted">Doctors, chemists, stockists, retailers, and wholesalers are the entities your team visits.</p>
 
   <div class="field">
     <label for="name">
@@ -28,9 +28,9 @@
       </label>
       <select id="type" name="type" required>
         {% set sel = existing.type if existing else '' %}
-        <option value="doctor"   {% if sel == 'doctor' %}selected{% endif %}>Doctor</option>
-        <option value="chemist"  {% if sel == 'chemist' %}selected{% endif %}>Chemist</option>
-        <option value="stockist" {% if sel == 'stockist' %}selected{% endif %}>Stockist</option>
+        {% for t in ['doctor','chemist','stockist','retailer','wholesaler'] %}
+          <option value="{{ t }}" {% if sel == t %}selected{% endif %}>{{ t|capitalize }}</option>
+        {% endfor %}
       </select>
     </div>
 
