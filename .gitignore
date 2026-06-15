@@ -31,4 +31,4 @@ Thumbs.db
 *.sqlite3
 
 # Workflow / claude artifacts
-.design-spec.md
+.design-spec*.md
