@@ -247,7 +247,25 @@ def fetch_today_planned_items(employee_id):
 @bp.post("/visits")
 @require_drupal
 def post_visit():
-    data = request.get_json(silent=True) or {}
+    """Accepts either JSON (no file) or multipart/form-data (with optional 'selfie' file).
+    The multipart form is what Drupal posts when the user attached a proof selfie."""
+    if request.content_type and request.content_type.startswith("multipart/"):
+        data = {k: v for k, v in request.form.items()}
+        f = request.files.get("selfie")
+        if f and f.filename:
+            import os
+            from werkzeug.utils import secure_filename
+            from flask import current_app
+            ext = (os.path.splitext(f.filename)[1] or ".jpg").lower()
+            if ext not in (".jpg", ".jpeg", ".png", ".webp"):
+                ext = ".jpg"
+            folder = os.path.join(current_app.static_folder, "uploads", "selfies", str(g.employee["id"]))
+            os.makedirs(folder, exist_ok=True)
+            fname = secure_filename(datetime.now().strftime("%Y%m%d-%H%M%S-%f") + ext)
+            f.save(os.path.join(folder, fname))
+            data["selfie_path"] = f"uploads/selfies/{g.employee['id']}/{fname}"
+    else:
+        data = request.get_json(silent=True) or {}
     try:
         result = log_visit(g.employee["id"], data)
     except LookupError as e:

@@ -38,6 +38,8 @@ class VisitForm extends FormBase {
     $form['#attached']['library'][] = 'sales_tracker/sales_tracker';
     $form['#prefix'] = '<div class="sales-tracker"><div class="st-card st-card--focal st-form-card">';
     $form['#suffix'] = '</div></div>';
+    // Required so the selfie file ride along with the form POST.
+    $form['#attributes']['enctype'] = 'multipart/form-data';
 
     // Pull today's plan so we can show the planned accounts as the picker.
     $planRes = $this->api->getPlanToday();
@@ -120,27 +122,23 @@ class VisitForm extends FormBase {
       '#attributes' => ['class' => ['form-select']],
     ];
 
+    // Source is set automatically by the JS: 'gps' if Use my location was
+    // clicked, 'manual' otherwise. We keep it as a hidden field so the
+    // server still sees a value.
     $form['source'] = [
-      '#type' => 'select',
-      '#title' => $this->t('Location source'),
-      '#options' => [
-        'manual' => $this->t('Manual (type place)'),
-        'gps' => $this->t('GPS (use device location)'),
-      ],
-      '#default_value' => 'gps',
-      '#prefix' => '<div class="st-field">',
-      '#suffix' => '</div>',
-      '#attributes' => ['class' => ['form-select']],
+      '#type' => 'hidden',
+      '#default_value' => 'manual',
+      '#attributes' => ['id' => 'visit-source-mode'],
     ];
 
     $form['actual_place_name'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Where are you now?'),
-      '#placeholder' => 'e.g. Saket District Centre, New Delhi',
-      '#description' => $this->t('Required for manual; auto-filled for GPS.'),
+      '#title' => $this->t('Visit address'),
+      '#placeholder' => 'House / Shop No., Area, City, State',
+      '#description' => $this->t('Type the address freely, or tap the button below to fill it from your device.'),
       '#prefix' => '<div class="st-field">',
       '#suffix' => '</div>',
-      '#attributes' => ['class' => ['form-text']],
+      '#attributes' => ['id' => 'visit-address', 'class' => ['form-text']],
     ];
 
     // v3: Geolocation subhead + optional "Account location" callout. The
@@ -197,44 +195,72 @@ class VisitForm extends FormBase {
       '#markup' => Markup::create($geo_section_html),
     ];
 
-    $form['coords_open'] = [
-      '#type' => 'markup',
-      '#markup' => '<div class="st-grid-2">',
-      '#allowed_tags' => ['div'],
-    ];
+    // Lat/lon ride along as hidden inputs — the JS Behavior fills them after
+    // a successful getCurrentPosition() so the matcher still has coords.
     $form['lat'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Latitude'),
-      '#placeholder' => '12.9716',
-      '#attributes' => ['id' => 'visit-lat', 'inputmode' => 'decimal', 'class' => ['form-text']],
-      '#prefix' => '<div class="st-field st-field--mono">',
-      '#suffix' => '</div>',
+      '#type' => 'hidden',
+      '#attributes' => ['id' => 'visit-lat'],
     ];
     $form['lon'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Longitude'),
-      '#placeholder' => '77.5946',
-      '#attributes' => ['id' => 'visit-lon', 'inputmode' => 'decimal', 'class' => ['form-text']],
-      '#prefix' => '<div class="st-field st-field--mono">',
-      '#suffix' => '</div>',
-    ];
-    $form['coords_close'] = [
-      '#type' => 'markup',
-      '#markup' => '</div>',
-      '#allowed_tags' => ['div'],
+      '#type' => 'hidden',
+      '#attributes' => ['id' => 'visit-lon'],
     ];
 
     $form['use_loc'] = [
       '#type' => 'html_tag',
       '#tag' => 'button',
-      '#value' => $this->t('Get my location'),
+      '#value' => $this->t('Use my current location'),
       '#prefix' => '<p class="st-field">',
-      '#suffix' => '</p>',
+      '#suffix' => '<small id="visit-useloc-status" class="st-field__help">' . $this->t('Fills the address from your device GPS.') . '</small></p>',
       '#attributes' => [
         'type' => 'button',
         'class' => ['st-btn', 'st-btn--secondary', 'st-btn--sm', 'js-st-geolocate'],
         'data-st-target-lat' => 'visit-lat',
         'data-st-target-lon' => 'visit-lon',
+        'data-st-target-address' => 'visit-address',
+        'data-st-status' => 'visit-useloc-status',
+      ],
+    ];
+
+    // ============== Proof-of-visit selfie ==============
+    $selfie_html = '<div class="st-field selfie-field">'
+      . '<span class="field-label">' . $this->t('Proof selfie') . ' <em class="req-text">(' . $this->t('optional') . ')</em></span>'
+      . '<small class="st-field__help">' . $this->t("Take a quick photo at the location — it'll be attached to this visit as proof.") . '</small>'
+      . '<div class="selfie-stage js-st-selfie">'
+      .   '<video class="selfie-video js-st-selfie-video" autoplay muted playsinline style="display:none"></video>'
+      .   '<canvas class="selfie-canvas js-st-selfie-canvas" style="display:none"></canvas>'
+      .   '<img class="selfie-preview js-st-selfie-preview" alt="" style="display:none">'
+      .   '<div class="selfie-placeholder js-st-selfie-placeholder">'
+      .     '<svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+      .       '<rect x="3" y="6" width="18" height="13" rx="2"/>'
+      .       '<circle cx="12" cy="12.5" r="3.5"/>'
+      .       '<path d="M8 6l1.5-2h5L16 6"/>'
+      .     '</svg>'
+      .     '<span>' . $this->t('No photo yet') . '</span>'
+      .   '</div>'
+      . '</div>'
+      . '<div class="selfie-controls">'
+      .   '<button type="button" class="st-btn st-btn--secondary js-st-selfie-open">' . $this->t('Open camera') . '</button>'
+      .   '<button type="button" class="st-btn st-btn--primary js-st-selfie-capture" style="display:none">' . $this->t('Capture') . '</button>'
+      .   '<button type="button" class="st-btn st-btn--secondary js-st-selfie-retake" style="display:none">' . $this->t('Retake') . '</button>'
+      . '</div>'
+      . '<small class="st-field__help js-st-selfie-status"></small>'
+      . '</div>';
+    $form['selfie_ui'] = [
+      '#type' => 'markup',
+      '#markup' => Markup::create($selfie_html),
+    ];
+    // The real file input that travels with the POST. Drupal will receive
+    // it under $request->files->get('files')['selfie'].
+    $form['selfie'] = [
+      '#type' => 'file',
+      '#title' => $this->t('Selfie'),
+      '#title_display' => 'invisible',
+      '#attributes' => [
+        'accept' => 'image/*',
+        'capture' => 'user',
+        'class' => ['js-st-selfie-input'],
+        'style' => 'display:none',
       ],
     ];
 
@@ -264,13 +290,6 @@ class VisitForm extends FormBase {
     if (!$aid) {
       $form_state->setErrorByName('account_id', $this->t('Pick an account.'));
     }
-    $source = $form_state->getValue('source');
-    if ($source === 'manual' && !trim((string) $form_state->getValue('actual_place_name'))) {
-      $form_state->setErrorByName('actual_place_name', $this->t('Place name is required for a manual visit.'));
-    }
-    if ($source === 'gps' && (!$form_state->getValue('lat') || !$form_state->getValue('lon'))) {
-      $form_state->setErrorByName('lat', $this->t('Latitude and longitude are required for a GPS visit.'));
-    }
     foreach (['lat' => [-90, 90], 'lon' => [-180, 180]] as $field => [$min, $max]) {
       $v = $form_state->getValue($field);
       if ($v !== '' && $v !== NULL && (!is_numeric($v) || $v < $min || $v > $max)) {
@@ -290,13 +309,23 @@ class VisitForm extends FormBase {
     $payload = [
       'account_id' => (int) $form_state->getValue('account_id'),
       'outcome' => $form_state->getValue('outcome'),
-      'source' => $form_state->getValue('source'),
+      'source' => $form_state->getValue('source') ?: 'manual',
       'actual_place_name' => trim((string) $form_state->getValue('actual_place_name')) ?: NULL,
       'lat' => $form_state->getValue('lat') !== '' ? (float) $form_state->getValue('lat') : NULL,
       'lon' => $form_state->getValue('lon') !== '' ? (float) $form_state->getValue('lon') : NULL,
       'visit_notes' => trim((string) $form_state->getValue('visit_notes')) ?: NULL,
     ];
-    $res = $this->api->logVisit($payload);
+    // If the user captured a selfie, it arrives under $_FILES['files']['selfie']
+    // (Drupal nests file fields under 'files'). Forward it to Flask as multipart.
+    $request = \Drupal::request();
+    $files = $request->files->get('files') ?: [];
+    $selfie = $files['selfie'] ?? NULL;
+    if ($selfie && $selfie->isValid() && $selfie->getSize() > 0) {
+      $res = $this->api->logVisitWithSelfie($payload, $selfie->getPathname(), $selfie->getClientOriginalName() ?: 'selfie.jpg');
+    }
+    else {
+      $res = $this->api->logVisit($payload);
+    }
     if (empty($res['ok'])) {
       $this->messenger()->addError($this->t('Could not log visit: @e', [
         '@e' => $res['error'] ?? 'unknown error',

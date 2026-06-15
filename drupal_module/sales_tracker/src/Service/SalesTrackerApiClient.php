@@ -151,6 +151,34 @@ class SalesTrackerApiClient {
   }
 
   /**
+   * Log a visit with a proof selfie. $filePath is an absolute path to the
+   * uploaded image on disk (e.g. Symfony UploadedFile->getPathname()).
+   * Flask saves the file in its own static/uploads/selfies/... dir and
+   * persists the relative path on the checkin row.
+   */
+  public function logVisitWithSelfie(array $data, string $filePath, string $originalName = 'selfie.jpg'): array {
+    $multipart = [];
+    foreach ($data as $k => $v) {
+      if ($v === NULL) { continue; }
+      $multipart[] = ['name' => $k, 'contents' => is_array($v) ? json_encode($v) : (string) $v];
+    }
+    $multipart[] = [
+      'name' => 'selfie',
+      'contents' => fopen($filePath, 'rb'),
+      'filename' => $originalName ?: 'selfie.jpg',
+    ];
+    return $this->request('POST', '/api/visits', ['multipart' => $multipart]);
+  }
+
+  /**
+   * Reverse-geocode (lat, lon) to a human-readable address via Flask.
+   * Called by the Drupal proxy controller — never directly by the browser.
+   */
+  public function reverseGeocode(float $lat, float $lon): array {
+    return $this->request('GET', '/api/reverse_geocode?lat=' . rawurlencode((string) $lat) . '&lon=' . rawurlencode((string) $lon));
+  }
+
+  /**
    * List historical visits. $filters: from, to, account_id, outcome, limit.
    */
   public function listVisits(array $filters = []): array {

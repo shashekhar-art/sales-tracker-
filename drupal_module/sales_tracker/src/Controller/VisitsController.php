@@ -37,10 +37,12 @@ class VisitsController extends ControllerBase {
     $res = $this->api->listVisits($filters);
     $visits = $res['rows'] ?? [];
 
+    $apiUrl = rtrim(\Drupal::config('sales_tracker.settings')->get('api_url') ?: 'http://127.0.0.1:5000', '/');
     return [
       '#theme' => 'sales_tracker_visits_history',
       '#visits' => $visits,
       '#filters' => $filters,
+      '#flask_static_base' => $apiUrl . '/static/',
       '#attached' => ['library' => ['sales_tracker/sales_tracker']],
       '#cache' => ['max-age' => 0],
     ];

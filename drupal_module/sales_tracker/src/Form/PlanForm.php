@@ -37,46 +37,26 @@ class PlanForm extends FormBase {
 
     $form['place'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Planned location'),
+      '#title' => $this->t('Planned address'),
       '#required' => TRUE,
       '#default_value' => $plan['planned_place_name'] ?? '',
-      '#placeholder' => 'e.g. Connaught Place, New Delhi',
-      '#description' => $this->t('The customer site or branch you plan to visit.'),
+      '#placeholder' => 'House / Shop No., Area, City, State',
+      '#description' => $this->t('Type the address freely, or use the button below.'),
       '#prefix' => '<div class="st-field">',
       '#suffix' => '</div>',
-      '#attributes' => ['class' => ['form-text']],
+      '#attributes' => ['id' => 'plan-address', 'class' => ['form-text']],
     ];
 
-    // Lat/lon sit in a 2-column grid using .st-grid-2.
-    $form['coords_open'] = [
-      '#type' => 'markup',
-      '#markup' => '<div class="st-grid-2">',
-      '#allowed_tags' => ['div'],
-    ];
+    // Lat/lon ride along as hidden inputs.
     $form['lat'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Latitude (optional)'),
+      '#type' => 'hidden',
       '#default_value' => $plan['planned_lat'] ?? '',
-      '#description' => $this->t('Decimal degrees, e.g. 12.9716'),
-      '#placeholder' => '12.9716',
-      '#attributes' => ['id' => 'plan-lat', 'inputmode' => 'decimal', 'class' => ['form-text']],
-      '#prefix' => '<div class="st-field st-field--mono">',
-      '#suffix' => '</div>',
+      '#attributes' => ['id' => 'plan-lat'],
     ];
     $form['lon'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Longitude (optional)'),
+      '#type' => 'hidden',
       '#default_value' => $plan['planned_lon'] ?? '',
-      '#description' => $this->t('Decimal degrees, e.g. 77.5946'),
-      '#placeholder' => '77.5946',
-      '#attributes' => ['id' => 'plan-lon', 'inputmode' => 'decimal', 'class' => ['form-text']],
-      '#prefix' => '<div class="st-field st-field--mono">',
-      '#suffix' => '</div>',
-    ];
-    $form['coords_close'] = [
-      '#type' => 'markup',
-      '#markup' => '</div>',
-      '#allowed_tags' => ['div'],
+      '#attributes' => ['id' => 'plan-lon'],
     ];
 
     $form['use_loc'] = [
@@ -84,12 +64,14 @@ class PlanForm extends FormBase {
       '#tag' => 'button',
       '#value' => $this->t('Use my current location'),
       '#prefix' => '<p class="st-field">',
-      '#suffix' => '</p>',
+      '#suffix' => '<small id="plan-useloc-status" class="st-field__help">' . $this->t('Fills the address from your device GPS.') . '</small></p>',
       '#attributes' => [
         'type' => 'button',
         'class' => ['st-btn', 'st-btn--secondary', 'st-btn--sm', 'js-st-geolocate'],
         'data-st-target-lat' => 'plan-lat',
         'data-st-target-lon' => 'plan-lon',
+        'data-st-target-address' => 'plan-address',
+        'data-st-status' => 'plan-useloc-status',
       ],
     ];
     $form['notes'] = [

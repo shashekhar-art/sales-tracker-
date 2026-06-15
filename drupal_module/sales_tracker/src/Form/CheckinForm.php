@@ -29,68 +29,44 @@ class CheckinForm extends FormBase {
     $form['#prefix'] = '<div class="sales-tracker"><div class="st-card st-card--focal st-form-card">';
     $form['#suffix'] = '</div></div>';
 
+    // Source set automatically by JS: 'gps' if location button was used, 'manual' otherwise.
     $form['source'] = [
-      '#type' => 'select',
-      '#title' => $this->t('Source'),
-      '#options' => [
-        'manual' => $this->t('Manual (type place)'),
-        'gps' => $this->t('GPS (use device location)'),
-      ],
+      '#type' => 'hidden',
       '#default_value' => 'manual',
-      '#prefix' => '<div class="st-field">',
-      '#suffix' => '</div>',
-      '#attributes' => ['class' => ['form-select']],
+      '#attributes' => ['id' => 'checkin-source-mode'],
     ];
     $form['actual_place_name'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Where are you now?'),
-      '#placeholder' => 'e.g. Janpath, New Delhi',
-      '#description' => $this->t('Required for manual; ignored for GPS.'),
+      '#placeholder' => 'House / Shop No., Area, City, State',
+      '#description' => $this->t('Type the address freely, or tap the button below.'),
       '#prefix' => '<div class="st-field">',
       '#suffix' => '</div>',
-      '#attributes' => ['class' => ['form-text']],
+      '#attributes' => ['id' => 'checkin-address', 'class' => ['form-text']],
     ];
 
-    $form['coords_open'] = [
-      '#type' => 'markup',
-      '#markup' => '<div class="st-grid-2">',
-      '#allowed_tags' => ['div'],
-    ];
     $form['lat'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Latitude'),
-      '#placeholder' => '12.9716',
-      '#description' => $this->t('Decimal degrees, 4 places'),
-      '#attributes' => ['id' => 'checkin-lat', 'inputmode' => 'decimal', 'class' => ['form-text']],
-      '#prefix' => '<div class="st-field st-field--mono">',
-      '#suffix' => '</div>',
+      '#type' => 'hidden',
+      '#attributes' => ['id' => 'checkin-lat'],
     ];
     $form['lon'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Longitude'),
-      '#placeholder' => '77.5946',
-      '#description' => $this->t('Decimal degrees, 4 places'),
-      '#attributes' => ['id' => 'checkin-lon', 'inputmode' => 'decimal', 'class' => ['form-text']],
-      '#prefix' => '<div class="st-field st-field--mono">',
-      '#suffix' => '</div>',
-    ];
-    $form['coords_close'] = [
-      '#type' => 'markup',
-      '#markup' => '</div>',
-      '#allowed_tags' => ['div'],
+      '#type' => 'hidden',
+      '#attributes' => ['id' => 'checkin-lon'],
     ];
 
     $form['use_loc'] = [
       '#type' => 'html_tag',
       '#tag' => 'button',
-      '#value' => $this->t('Get my location'),
+      '#value' => $this->t('Use my current location'),
       '#prefix' => '<p class="st-field">',
-      '#suffix' => '</p>',
+      '#suffix' => '<small id="checkin-useloc-status" class="st-field__help">' . $this->t('Fills the address from your device GPS.') . '</small></p>',
       '#attributes' => [
         'type' => 'button',
         'class' => ['st-btn', 'st-btn--secondary', 'st-btn--sm', 'js-st-geolocate'],
         'data-st-target-lat' => 'checkin-lat',
         'data-st-target-lon' => 'checkin-lon',
+        'data-st-target-address' => 'checkin-address',
+        'data-st-status' => 'checkin-useloc-status',
       ],
     ];
     $form['actions']['#type'] = 'actions';
@@ -105,12 +81,8 @@ class CheckinForm extends FormBase {
   }
 
   public function validateForm(array &$form, FormStateInterface $form_state) {
-    $source = $form_state->getValue('source');
-    if ($source === 'manual' && !trim($form_state->getValue('actual_place_name'))) {
-      $form_state->setErrorByName('actual_place_name', $this->t('Place name is required for a manual check-in.'));
-    }
-    if ($source === 'gps' && (!$form_state->getValue('lat') || !$form_state->getValue('lon'))) {
-      $form_state->setErrorByName('lat', $this->t('Latitude and longitude are required for a GPS check-in.'));
+    if (!trim((string) $form_state->getValue('actual_place_name'))) {
+      $form_state->setErrorByName('actual_place_name', $this->t('Address is required.'));
     }
     foreach (['lat' => [-90, 90], 'lon' => [-180, 180]] as $field => [$min, $max]) {
       $v = $form_state->getValue($field);

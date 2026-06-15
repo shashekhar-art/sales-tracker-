@@ -92,7 +92,7 @@ function sales_tracker_theme($existing, $type, $theme, $path) {
       'template' => 'sales-tracker-account-detail',
     ],
     'sales_tracker_visits_history' => [
-      'variables' => ['visits' => [], 'filters' => []],
+      'variables' => ['visits' => [], 'filters' => [], 'flask_static_base' => 'http://127.0.0.1:5000/static/'],
       'template' => 'sales-tracker-visits-history',
     ],
     'sales_tracker_reports' => [

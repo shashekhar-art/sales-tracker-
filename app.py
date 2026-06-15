@@ -149,11 +149,14 @@ def register():
 
 
 @app.route("/api/reverse_geocode")
-@login_required
 def api_reverse_geocode():
-    """Turn (lat, lon) into a human-readable address for the form to display."""
+    """Turn (lat, lon) into a human-readable address. Accepts either Flask
+    session login OR the Drupal X-API-Key header so the Drupal frontend can
+    proxy this call from the browser."""
     from ai.matcher import reverse_geocode
     from flask import jsonify
+    if "user_id" not in session and request.headers.get("X-API-Key") != config.API_KEY:
+        return jsonify({"ok": False, "error": "auth required"}), 401
     try:
         lat = float(request.args.get("lat", ""))
         lon = float(request.args.get("lon", ""))

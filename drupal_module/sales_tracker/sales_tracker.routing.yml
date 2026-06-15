@@ -176,3 +176,12 @@ sales_tracker.proctor.employee:
   requirements:
     _permission: 'administer sales tracker'
     eid: \d+
+
+# --- Browser-side proxy for reverse geocoding (same-origin so no CORS) ---
+sales_tracker.api.reverse_geocode:
+  path: '/sales/api/reverse_geocode'
+  defaults:
+    _controller: '\Drupal\sales_tracker\Controller\GeoProxyController::reverseGeocode'
+  requirements:
+    _permission: 'use sales tracker'
+  methods: [GET]

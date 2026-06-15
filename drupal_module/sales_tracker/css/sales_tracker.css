@@ -1521,6 +1521,47 @@
   border-color: #DDD6FE;
 }
 
+/* ---- Selfie / proof-of-visit capture ---- */
+.sales-tracker .selfie-field { margin-top: 16px; }
+.sales-tracker .selfie-stage {
+  margin-top: 8px;
+  width: 100%;
+  max-width: 280px;
+  aspect-ratio: 1 / 1;
+  border-radius: 14px;
+  border: 1.5px dashed var(--c-border, #E7E5E4);
+  background: var(--c-surface-alt, #F5F5F4);
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+.sales-tracker .selfie-video,
+.sales-tracker .selfie-preview,
+.sales-tracker .selfie-canvas {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+}
+.sales-tracker .selfie-placeholder {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  color: var(--c-text-muted, #64748B); font-size: 13px;
+}
+.sales-tracker .selfie-controls {
+  display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;
+}
+.sales-tracker .st-history-selfie img {
+  width: 44px; height: 44px; border-radius: 8px; object-fit: cover;
+  border: 1px solid var(--c-border, #E7E5E4);
+  vertical-align: middle;
+}
+.sales-tracker .st-history-selfie a { display: inline-block; line-height: 0; }
+
+/* ---- Geolocation + selfie status feedback ---- */
+.sales-tracker .st-field__help.is-ok    { color: #047857; font-weight: 600; }
+.sales-tracker .st-field__help.is-warn  { color: #B45309; font-weight: 600; }
+.sales-tracker .st-field__help.is-err   { color: #B91C1C; font-weight: 600; }
+.sales-tracker .st-field__help.is-ok::before   { content: "✅  "; }
+.sales-tracker .st-field__help.is-warn::before { content: "⚠️  "; }
+.sales-tracker .st-field__help.is-err::before  { content: "❌  "; }
+
 /* ---- 18.5 Bar chart ---- */
 .sales-tracker .st-chart-bar {
   display: flex;

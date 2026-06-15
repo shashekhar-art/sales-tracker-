@@ -32,3 +32,5 @@ Thumbs.db
 
 # Workflow / claude artifacts
 .design-spec*.md
+static/uploads/selfies/*/
+!static/uploads/selfies/.gitkeep
