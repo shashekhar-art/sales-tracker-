@@ -1351,3 +1351,312 @@ td.num { font-variant-numeric: tabular-nums; }
   .menubar__btn { min-height: 76px; padding: 12px 8px; font-size: 12px; }
   .menubar__btn-icon { width: 22px; height: 22px; }
 }
+
+/* ============================================================
+   BISHWA v3 — EDITORIAL LAYERED BACKDROP (Flask mirror)
+   Same canvas as bishwa.css, scoped to <body> so it works without
+   a .bm-page wrapper. Cards stay solid white on top.
+   ============================================================ */
+
+html, body {
+  background-color: #FAFAF9;
+  background-image:
+    /* A. top-left aurora: iris -> teal -> transparent */
+    radial-gradient(1200px 520px at 12% -120px,
+      rgba(79, 70, 229, 0.10) 0%,
+      rgba(79, 70, 229, 0.06) 28%,
+      rgba(14, 165, 164, 0.04) 55%,
+      rgba(250, 250, 249, 0)   78%),
+    /* B. bottom-right primary-50 vignette */
+    radial-gradient(900px 600px at 105% 110%,
+      rgba(238, 240, 255, 0.55) 0%,
+      rgba(250, 250, 249, 0)    70%),
+    /* C. 28px dot mesh, 1px dots at 6% ink */
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'><circle cx='1' cy='1' r='1' fill='%230F172A' fill-opacity='0.06'/></svg>"),
+    /* D. warm cream paper tint */
+    linear-gradient(180deg, #FBFAF7 0%, #FAFAF9 280px, #F7F5F1 100%);
+  background-repeat: no-repeat, no-repeat, repeat, no-repeat;
+  background-size: 1200px 520px, 900px 600px, 28px 28px, 100% 100%;
+  background-attachment: fixed, fixed, fixed, fixed;
+}
+
+/* Desktop-only hairline grid overlay applied via body::after */
+@media (min-width: 1024px) {
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'><path d='M32 0H0v32' fill='none' stroke='%230F172A' stroke-opacity='0.045' stroke-width='1'/></svg>");
+    background-repeat: repeat;
+    -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, #000 40%, transparent 95%);
+            mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, #000 40%, transparent 95%);
+    mix-blend-mode: multiply;
+  }
+}
+
+/* Lift app chrome above the decorative layers */
+.appbar,
+.page,
+.menubar,
+main,
+header,
+footer,
+.bottom-nav { position: relative; z-index: 1; }
+
+/* Card surfaces stay solid white with a slight "floating" shadow on the
+   layered backdrop so contrast holds. */
+.card,
+.form-card,
+.login-card,
+.flash {
+  background: var(--c-surface);
+  box-shadow: var(--sh-1), 0 12px 32px -18px rgba(15, 23, 42, 0.18);
+}
+
+/* ---- Accessibility + print fallbacks ---- */
+@media (prefers-reduced-transparency: reduce) {
+  html, body { background-image: none; background-color: var(--c-bg); }
+  body::after { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html, body { background-attachment: scroll, scroll, scroll, scroll; }
+}
+@media print {
+  html, body { background: #fff !important; }
+  body::after { display: none; }
+}
+
+/* ============================================================
+   BISHWA v3 — UNIVERSAL BUTTON SWEEP (Flask mirror)
+   Targets unprefixed .btn (Flask) + .menubar__btn + raw <button>/
+   <input type=submit> rendered by Flask forms.
+   Same recipe as bishwa.css: 44px touch, hover/focus/active/disabled,
+   no layout shift, full-width on <=480px primary form actions.
+   ============================================================ */
+
+/* ---- 1. SHARED BASELINE ---- */
+.btn,
+.menubar__btn,
+button.btn,
+form button[type="submit"]:not(.is-bare),
+form input[type="submit"]:not(.is-bare) {
+  --btn-bg:     var(--c-primary, #4F46E5);
+  --btn-fg:     #fff;
+  --btn-border: transparent;
+  --btn-ring:   rgba(79, 70, 229, 0.22);
+
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  /* Reserve shadow slot up front so hover never resizes the box */
+  box-shadow: 0 0 0 0 transparent, var(--sh-1);
+  transform: translateZ(0);
+  transition:
+    background-color 140ms var(--ease-out, cubic-bezier(0.22, 1, 0.36, 1)),
+    border-color     140ms var(--ease-out, cubic-bezier(0.22, 1, 0.36, 1)),
+    color            140ms var(--ease-out, cubic-bezier(0.22, 1, 0.36, 1)),
+    box-shadow       140ms var(--ease-out, cubic-bezier(0.22, 1, 0.36, 1));
+}
+
+/* ---- 2. HOVER — no layout shift ---- */
+.btn:hover,
+.menubar__btn:hover {
+  text-decoration: none;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), var(--sh-1);
+  transform: none;
+}
+.btn--primary:hover { background: var(--c-primary-dark); border-color: var(--c-primary-dark); color: #fff; }
+
+/* ---- 3. FOCUS-VISIBLE — 2px outline + 4px halo ---- */
+.btn:focus-visible,
+.menubar__btn:focus-visible,
+form button[type="submit"]:focus-visible,
+form input[type="submit"]:focus-visible {
+  outline: 2px solid var(--c-primary);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px var(--btn-ring), var(--sh-1);
+}
+.btn--danger:focus-visible {
+  outline-color: var(--c-danger);
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.22), var(--sh-1);
+}
+
+/* ---- 4. ACTIVE ---- */
+.btn:active,
+.menubar__btn:active {
+  box-shadow: inset 0 2px 4px rgba(15, 23, 42, 0.18);
+  transform: translateY(0);
+}
+
+/* ---- 5. DISABLED — already covered above with !important guards; reinforce ---- */
+.btn[disabled],
+.btn:disabled,
+.btn[aria-disabled="true"],
+.menubar__btn:disabled,
+.menubar__btn[aria-disabled="true"] {
+  background: var(--c-surface-alt);
+  color: var(--c-text-muted);
+  border-color: var(--c-border);
+  cursor: not-allowed;
+  pointer-events: none;
+  box-shadow: none;
+  transform: none;
+  opacity: 0.85;
+}
+
+/* ---- 6. TOUCH: 44px tap target on coarse pointers ---- */
+@media (hover: none) and (pointer: coarse) {
+  .btn,
+  .menubar__btn,
+  form button[type="submit"],
+  form input[type="submit"] {
+    min-height: 44px;
+    padding: 12px 18px;
+  }
+  .btn:hover,
+  .menubar__btn:hover { transform: none; }
+  /* Disable active "lift" on the .menubar so it doesn't twitch on tap */
+  .menubar__btn:hover { transform: none; }
+}
+
+/* ---- 7. <=480px: primary form actions stretch full-width ---- */
+@media (max-width: 480px) {
+  form .form-actions .btn,
+  form .form-actions .btn--primary,
+  form .form-card__footer .btn,
+  form button[type="submit"],
+  form input[type="submit"] {
+    display: flex;
+    width: 100%;
+    min-height: 48px;
+    padding: 12px 20px;
+    font-size: 15px;
+  }
+  .form-actions,
+  .form-card__footer {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--sp-2, 8px);
+  }
+  form .form-actions .btn--ghost,
+  form .form-actions .btn--secondary { width: 100%; }
+}
+
+/* ---- 8. Reduced motion ---- */
+@media (prefers-reduced-motion: reduce) {
+  .btn, .menubar__btn { transition: none; }
+}
+
+/* ============================================================
+   BISHWA v3 — GEOLOCATION COMPONENT (Flask mirror, unprefixed file
+   but uses .st-geo class names so the same partial works on both
+   the Drupal module and the Flask app.)
+   ============================================================ */
+
+.st-geo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-xs, 12px);
+  line-height: 1.4;
+  color: var(--c-text-muted);
+  flex-wrap: wrap;
+}
+.st-geo__pin {
+  color: var(--c-primary);
+  flex: 0 0 14px;
+}
+.st-geo__coord {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 2px 6px;
+  background: var(--c-surface-alt);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-sm);
+  color: var(--c-text);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+.st-geo__map {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  min-height: 24px;
+  padding: 2px 4px;
+  border-radius: var(--r-sm);
+  color: var(--c-primary-dark);
+  font-weight: 600;
+  text-decoration: none;
+  border-bottom: 1px dotted currentColor;
+}
+.st-geo__map:hover {
+  color: var(--c-primary);
+  border-bottom-style: solid;
+  text-decoration: none;
+}
+.st-geo__map:focus-visible {
+  outline: 2px solid var(--c-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+.st-geo--empty {
+  font-style: italic;
+  color: var(--c-text-subtle, #94A3B8);
+}
+
+/* Visit-form callout */
+.st-geo-section {
+  margin: var(--sp-4) 0 var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--c-primary-50);
+  border-left: 3px solid var(--c-primary);
+  border-radius: 0 var(--r-md) var(--r-md) 0;
+}
+.st-geo-section__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-eyebrow);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--ls-eyebrow);
+  color: var(--c-primary-dark);
+  margin: 0 0 var(--sp-2);
+}
+.st-geo-callout {
+  margin: 0;
+  font-size: var(--fs-sm);
+}
+.st-geo-callout__label {
+  font-weight: 600;
+  color: var(--c-text);
+  margin-right: 6px;
+}
+
+/* Enhance the existing hero .chip--coord into a richer pill that fits the partial */
+.chip--coord.chip--enhanced,
+.st-chip--coord.st-chip--enhanced {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  font-size: 13px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid var(--c-border);
+  border-radius: 999px;
+}
+
+.st-district__pin {
+  color: var(--c-primary);
+  vertical-align: -3px;
+  margin-right: 4px;
+}
+
+@media (max-width: 480px) {
+  .st-geo { gap: 4px; }
+  .st-geo__map {
+    min-height: 32px;
+    padding: 4px 6px;
+  }
+}

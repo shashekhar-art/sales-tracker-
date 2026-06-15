@@ -70,11 +70,29 @@
         </td>
         <td data-label="Planned">
           <div class="cell-place__name">{{ r.planned_place_name or '—' }}</div>
+          {% if r.planned_lat is defined and r.planned_lat is not none
+                and r.planned_lon is defined and r.planned_lon is not none %}
+            <div class="cell-place__geo">
+              {% with lat = r.planned_lat, lon = r.planned_lon,
+                      label = r.planned_place_name|default('planned location') %}
+                {% include "_geo.html" %}
+              {% endwith %}
+            </div>
+          {% endif %}
         </td>
         <td data-label="Actual">
           <div class="cell-place__name">{{ r.actual_place_name or '—' }}</div>
           {% if r.text_similarity is not none %}
           <div class="cell-place__sub">text sim {{ "%.2f"|format(r.text_similarity) }}</div>
+          {% endif %}
+          {% if r.actual_lat is defined and r.actual_lat is not none
+                and r.actual_lon is defined and r.actual_lon is not none %}
+            <div class="cell-place__geo">
+              {% with lat = r.actual_lat, lon = r.actual_lon,
+                      label = r.actual_place_name|default('check-in location') %}
+                {% include "_geo.html" %}
+              {% endwith %}
+            </div>
           {% endif %}
         </td>
         <td data-label="Distance">

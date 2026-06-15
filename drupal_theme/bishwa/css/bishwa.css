@@ -58,13 +58,13 @@
 html, body {
   margin: 0;
   padding: 0;
-  background: var(--bm-bg);
   color: var(--bm-text);
   font-family: var(--bm-font);
   font-size: 15px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Background defined in the v3 layered backdrop block below */
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -87,6 +87,9 @@ p { margin: 0 0 var(--bm-sp-3); }
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  /* v3: enable layered backdrop isolation + content z-index reservation */
+  position: relative;
+  isolation: isolate;
 }
 
 /* ===== Header ===== */
@@ -424,4 +427,387 @@ p { margin: 0 0 var(--bm-sp-3); }
   .bm-header, .bm-footer { display: none; }
   .bm-main { padding: 0; }
   a { color: inherit; text-decoration: none; }
+}
+
+/* ============================================================
+   BISHWA v3 — EDITORIAL LAYERED + ENGINEERED GRID BACKDROP
+   Layers (bottom -> top, all pointer-events:none, all z-index:0):
+     D. warm cream paper tint  (linear gradient)
+     C. 28px inline-SVG dot mesh (6% ink) — every viewport
+     B. bottom-right primary-50 vignette
+     A. top-left iris -> teal aurora wash
+     E. 32px hairline grid overlay — desktop only (>=1024px)
+     F. editorial top-band under sticky header
+   Content forced to z-index:1.
+   No external assets, no new tokens, no palette redefinition.
+   ============================================================ */
+
+html, body {
+  background-color: #FAFAF9; /* fallback === var(--bm-bg) */
+  background-image:
+    /* A. top-left aurora: iris -> teal -> transparent */
+    radial-gradient(1200px 520px at 12% -120px,
+      rgba(79, 70, 229, 0.10) 0%,
+      rgba(79, 70, 229, 0.06) 28%,
+      rgba(14, 165, 164, 0.04) 55%,
+      rgba(250, 250, 249, 0)   78%),
+    /* B. bottom-right primary-50 vignette */
+    radial-gradient(900px 600px at 105% 110%,
+      rgba(238, 240, 255, 0.55) 0%,
+      rgba(250, 250, 249, 0)    70%),
+    /* C. 28px dot mesh, 1px dots at 6% ink */
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'><circle cx='1' cy='1' r='1' fill='%230F172A' fill-opacity='0.06'/></svg>"),
+    /* D. warm cream paper tint */
+    linear-gradient(180deg, #FBFAF7 0%, #FAFAF9 280px, #F7F5F1 100%);
+  background-repeat: no-repeat, no-repeat, repeat, no-repeat;
+  background-size: 1200px 520px, 900px 600px, 28px 28px, 100% 100%;
+  background-attachment: fixed, fixed, fixed, fixed;
+}
+
+/* F. Editorial top-band — softer iris wash directly under sticky header,
+      anchors the hero/dashboard without a hard horizon line. */
+.bm-page::before {
+  content: "";
+  position: absolute;
+  inset: var(--bm-header-h, 64px) 0 auto 0;
+  height: 360px;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    linear-gradient(180deg,
+      rgba(238, 240, 255, 0.65) 0%,
+      rgba(238, 240, 255, 0.18) 55%,
+      rgba(250, 250, 249, 0)    100%);
+  -webkit-mask-image: linear-gradient(180deg, #000 60%, transparent 100%);
+          mask-image: linear-gradient(180deg, #000 60%, transparent 100%);
+}
+
+/* E. Desktop-only hairline grid (>=1024px) — engineering cue.
+      Hairline at ~4.5% slate, masked with center-weighted ellipse so the
+      grid recedes toward the edges. */
+@media (min-width: 1024px) {
+  .bm-page::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'><path d='M32 0H0v32' fill='none' stroke='%230F172A' stroke-opacity='0.045' stroke-width='1'/></svg>");
+    background-repeat: repeat;
+    -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, #000 40%, transparent 95%);
+            mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, #000 40%, transparent 95%);
+    mix-blend-mode: multiply;
+  }
+}
+
+/* Content sits above the decorative layers */
+.bm-header,
+.bm-main,
+.bm-breadcrumb,
+.bm-highlighted,
+.bm-footer,
+.sales-tracker,
+.menubar,
+main,
+header,
+footer { position: relative; z-index: 1; }
+
+/* Cards remain solid white so contrast holds; slight extra shadow so
+   they read as "floating" on the layered backdrop. */
+.bm-card,
+.st-card,
+.bm-main .user-login-form,
+.bm-main .user-pass,
+.bm-main .user-register-form,
+.bm-main .messages {
+  background: var(--bm-surface);
+  border: 1px solid var(--bm-border);
+  box-shadow: var(--bm-sh-1), 0 12px 32px -18px rgba(15, 23, 42, 0.18);
+}
+
+/* ---- Accessibility + print fallbacks ---- */
+@media (prefers-reduced-transparency: reduce) {
+  html, body { background-image: none; background-color: var(--bm-bg); }
+  .bm-page::before,
+  .bm-page::after { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html, body { background-attachment: scroll, scroll, scroll, scroll; }
+}
+@media print {
+  html, body { background: #fff !important; }
+  .bm-page::before,
+  .bm-page::after { display: none; }
+}
+
+/* ============================================================
+   BISHWA v3 — UNIVERSAL BUTTON SWEEP
+   Covers: .bm-btn, .st-btn, .menubar__btn, .st-menubar__btn,
+           Drupal-rendered <button>, input[type=submit], .button,
+           .form-submit, .js-form-submit
+   - 44px tap target on touch
+   - hover / focus-visible / active / disabled states
+   - full-width primary form action <=480px
+   - NO layout shift on hover (color + inset shadow only)
+   - 2px outline + 4px halo focus ring (WCAG AA)
+   ============================================================ */
+
+/* ---- 1. SHARED BASELINE ---- */
+.bm-btn,
+.sales-tracker .st-btn,
+.menubar__btn,
+.sales-tracker .st-menubar__btn,
+.bm-main .button,
+.bm-main .form-submit,
+.bm-main button[type="submit"],
+.bm-main input[type="submit"],
+.sales-tracker button:not(.is-bare),
+.sales-tracker input[type="submit"],
+button.js-form-submit {
+  --btn-bg:     var(--bm-primary, #4F46E5);
+  --btn-fg:     var(--bm-text-inverse, #fff);
+  --btn-border: transparent;
+  --btn-ring:   rgba(79, 70, 229, 0.22);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 10px 18px;
+  border: 1px solid var(--btn-border);
+  border-radius: var(--bm-r-md, 10px);
+  background: var(--btn-bg);
+  color: var(--btn-fg);
+  font-family: var(--bm-font);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  /* Reserve shadow + transform slots up front so hover never resizes the box */
+  box-shadow: 0 0 0 0 transparent, var(--bm-sh-1);
+  transform: translateZ(0);
+  transition:
+    background-color 140ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color     140ms cubic-bezier(0.22, 1, 0.36, 1),
+    color            140ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow       140ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ---- 2. HOVER — color shift + inset highlight only, NO size shift ---- */
+.bm-btn:hover,
+.sales-tracker .st-btn:hover,
+.menubar__btn:hover,
+.sales-tracker .st-menubar__btn:hover,
+.bm-main .button:hover,
+.bm-main .form-submit:hover {
+  background: var(--bm-primary-dark, #3730A3);
+  color: #fff;
+  text-decoration: none;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), var(--bm-sh-1);
+  transform: none; /* OVERRIDE any legacy translateY(-1px) */
+}
+
+/* ---- 3. FOCUS-VISIBLE — 2px outline + 4px halo (AA mandate) ---- */
+.bm-btn:focus-visible,
+.sales-tracker .st-btn:focus-visible,
+.menubar__btn:focus-visible,
+.sales-tracker .st-menubar__btn:focus-visible,
+.bm-main .button:focus-visible,
+.bm-main .form-submit:focus-visible,
+.bm-main button:focus-visible,
+.bm-main input[type="submit"]:focus-visible,
+.sales-tracker button:focus-visible,
+.sales-tracker input[type="submit"]:focus-visible {
+  outline: 2px solid var(--bm-primary, #4F46E5);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px var(--btn-ring), var(--bm-sh-1);
+}
+
+/* ---- 4. ACTIVE ---- */
+.bm-btn:active,
+.sales-tracker .st-btn:active,
+.menubar__btn:active,
+.sales-tracker .st-menubar__btn:active,
+.bm-main .button:active,
+.bm-main .form-submit:active {
+  background: var(--bm-primary-dark, #3730A3);
+  box-shadow: inset 0 2px 4px rgba(15, 23, 42, 0.18);
+  transform: translateY(0);
+}
+
+/* ---- 5. DISABLED ---- */
+.bm-btn:disabled, .bm-btn[aria-disabled="true"],
+.sales-tracker .st-btn:disabled, .sales-tracker .st-btn[aria-disabled="true"],
+.menubar__btn:disabled,
+.sales-tracker .st-menubar__btn:disabled,
+.bm-main .button:disabled,
+.bm-main .form-submit:disabled,
+.bm-main button:disabled,
+.bm-main input[type="submit"]:disabled,
+.sales-tracker button:disabled,
+.sales-tracker input[type="submit"]:disabled {
+  background: var(--bm-surface-alt, #F5F5F4);
+  color: var(--bm-text-muted, #64748B);
+  border-color: var(--bm-border, #E7E5E4);
+  cursor: not-allowed;
+  pointer-events: none;
+  box-shadow: none;
+  transform: none;
+  opacity: 0.85;
+}
+
+/* ---- 6. VARIANTS (reuse the same shell, override --btn-* only) ---- */
+.bm-btn--primary {
+  --btn-bg: var(--bm-primary, #4F46E5);
+  --btn-fg: #fff;
+  --btn-border: transparent;
+}
+.bm-btn--primary:hover { background: var(--bm-primary-dark, #3730A3); color: #fff; }
+
+.bm-btn--ghost {
+  --btn-bg: var(--bm-surface, #fff);
+  --btn-fg: var(--bm-text, #0F172A);
+  --btn-border: var(--bm-border-strong, #D6D3D1);
+}
+.bm-btn--ghost:hover {
+  background: var(--bm-surface-alt, #F5F5F4);
+  color: var(--bm-text, #0F172A);
+  border-color: var(--bm-border-strong, #D6D3D1);
+}
+
+/* ---- 7. TOUCH: 44px tap target on coarse pointers ---- */
+@media (hover: none) and (pointer: coarse) {
+  .bm-btn,
+  .sales-tracker .st-btn,
+  .menubar__btn,
+  .sales-tracker .st-menubar__btn,
+  .bm-main .button,
+  .bm-main .form-submit,
+  .bm-main button,
+  .bm-main input[type="submit"],
+  .sales-tracker button,
+  .sales-tracker input[type="submit"] {
+    min-height: 44px;
+    padding: 12px 18px;
+  }
+  .bm-btn:hover,
+  .sales-tracker .st-btn:hover { transform: none; }
+}
+
+/* ---- 8. <=480px: primary form actions stretch full-width ---- */
+@media (max-width: 480px) {
+  form .form-actions .bm-btn--primary,
+  form .form-actions .bm-btn,
+  form .form-actions .button,
+  form .form-actions .form-submit,
+  form .form-actions input[type="submit"],
+  form .st-form__actions .st-btn--primary,
+  form .st-form-actions .st-btn--primary,
+  form button[type="submit"],
+  form input[type="submit"],
+  .bm-main .user-login-form .form-submit,
+  .bm-main .user-pass .form-submit,
+  .bm-main .user-register-form .form-submit {
+    display: flex;
+    width: 100%;
+    min-height: 48px;
+    padding: 12px 20px;
+    font-size: 15px;
+  }
+  .form-actions,
+  .st-form__actions,
+  .st-form-actions,
+  .bm-form-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--bm-sp-2, 8px);
+  }
+  form .form-actions .bm-btn--ghost,
+  form .st-form__actions .st-btn--ghost { width: 100%; }
+}
+
+/* ---- 9. Reduced motion ---- */
+@media (prefers-reduced-motion: reduce) {
+  .bm-btn,
+  .sales-tracker .st-btn,
+  .menubar__btn,
+  .sales-tracker .st-menubar__btn,
+  .bm-main .button,
+  .bm-main .form-submit { transition: none; }
+}
+
+/* ============================================================
+   BISHWA v3 — GEOLOCATION COMPONENT (.bm-geo mirror)
+   Mirrors the .st-geo component in module CSS so theme-rendered
+   places (Drupal Twig outside the .sales-tracker scope) get the
+   same pin + coord chip + map-link treatment.
+   ============================================================ */
+
+.bm-geo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--bm-text-muted, #64748B);
+  flex-wrap: wrap;
+}
+.bm-geo__pin {
+  color: var(--bm-primary, #4F46E5);
+  flex: 0 0 14px;
+}
+.bm-geo code,
+.bm-geo__coord {
+  font-family: ui-monospace, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 12px;
+  padding: 2px 6px;
+  background: var(--bm-surface-alt, #F5F5F4);
+  border: 1px solid var(--bm-border, #E7E5E4);
+  border-radius: var(--bm-r-sm, 6px);
+  color: var(--bm-text, #0F172A);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+.bm-geo a,
+.bm-geo__map {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  min-height: 24px;
+  padding: 2px 4px;
+  border-radius: var(--bm-r-sm, 6px);
+  color: var(--bm-primary-dark, #3730A3);
+  font-weight: 600;
+  text-decoration: none;
+  border-bottom: 1px dotted currentColor;
+}
+.bm-geo a:hover,
+.bm-geo__map:hover {
+  color: var(--bm-primary, #4F46E5);
+  border-bottom-style: solid;
+  text-decoration: none;
+}
+.bm-geo a:focus-visible,
+.bm-geo__map:focus-visible {
+  outline: 2px solid var(--bm-primary, #4F46E5);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+.bm-geo--empty {
+  font-style: italic;
+  color: #94A3B8;
+}
+
+@media (max-width: 480px) {
+  .bm-geo { gap: 4px; }
+  .bm-geo a,
+  .bm-geo__map {
+    min-height: 32px;
+    padding: 4px 6px;
+  }
 }

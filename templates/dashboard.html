@@ -23,12 +23,15 @@
         </h1>
         <div class="hero__meta">
           {% if plan.planned_lat is not none and plan.planned_lon is not none %}
-          <span class="chip chip--coord">
+          <span class="chip chip--coord st-chip--coord st-chip--enhanced">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                  stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
             </svg>
-            {{ "%.4f"|format(plan.planned_lat) }}, {{ "%.4f"|format(plan.planned_lon) }}
+            {% with lat = plan.planned_lat, lon = plan.planned_lon,
+                    label = plan.planned_place_name|default('today\'s plan') %}
+              {% include "_geo.html" %}
+            {% endwith %}
           </span>
           {% endif %}
           {% if plan.notes %}
@@ -152,6 +155,14 @@
             </span>
             {% if it.account_address %}
             <span class="cell-place__sub" style="font-family: var(--font-sans);">{{ it.account_address }}</span>
+            {% endif %}
+            {% if it.account_lat is defined and it.account_lat is not none
+                  and it.account_lon is defined and it.account_lon is not none %}
+              <span class="cell-place__geo">
+                {% with lat = it.account_lat, lon = it.account_lon, label = it.account_name %}
+                  {% include "_geo.html" %}
+                {% endwith %}
+              </span>
             {% endif %}
           </span>
           <a class="btn btn--secondary btn--sm" href="{{ url_for('visit') }}?account_id={{ it.account_id }}">
@@ -429,7 +440,12 @@
         <td data-label="Place">
           <div class="cell-place__name">{{ h.actual_place_name or '—' }}</div>
           {% if h.actual_lat is defined and h.actual_lat is not none and h.actual_lon is not none %}
-          <div class="cell-place__sub">{{ "%.4f"|format(h.actual_lat) }}, {{ "%.4f"|format(h.actual_lon) }}</div>
+            <div class="cell-place__geo">
+              {% with lat = h.actual_lat, lon = h.actual_lon,
+                      label = h.actual_place_name|default('check-in location') %}
+                {% include "_geo.html" %}
+              {% endwith %}
+            </div>
           {% endif %}
         </td>
         <td data-label="Source">

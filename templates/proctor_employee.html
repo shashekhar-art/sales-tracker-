@@ -38,4 +38,57 @@
     </div>
   {% endfor %}
 </div>
+
+{% if visits is defined and visits %}
+<section class="card datatable" style="margin-top: 24px;" aria-labelledby="empVisitsTitle">
+  <header class="datatable__head">
+    <h2 id="empVisitsTitle" class="card__title">Recent visits</h2>
+    <span class="card__sub">{{ visits|length }} logged</span>
+  </header>
+  <table>
+    <thead>
+      <tr>
+        <th>When</th>
+        <th>Account</th>
+        <th>Outcome</th>
+        <th>Geolocation</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for v in visits %}
+      <tr>
+        <td data-label="When">
+          {% if v.checkin_time %}
+            <div class="cell-time__rel">{{ v.checkin_time.strftime('%H:%M') }}</div>
+            <div class="cell-time__abs">{{ v.checkin_time.strftime('%Y-%m-%d') }}</div>
+          {% else %}<span class="muted">—</span>{% endif %}
+        </td>
+        <td data-label="Account">
+          <div class="cell-place__name">{{ v.account_name or '—' }}</div>
+          {% if v.account_type %}
+            <span class="account-type-tag account-type-tag--{{ v.account_type }}">{{ v.account_type|capitalize }}</span>
+          {% endif %}
+        </td>
+        <td data-label="Outcome">
+          {% if v.outcome %}
+            <span class="visit-row__outcome visit-row__outcome--{{ v.outcome }}">
+              {{ {'met':'Met','not_met':'Not met','rescheduled':'Rescheduled'}[v.outcome] }}
+            </span>
+          {% else %}<span class="muted">—</span>{% endif %}
+        </td>
+        <td data-label="Geolocation">
+          {% if v.lat is defined and v.lat is not none and v.lon is defined and v.lon is not none %}
+            {% with lat = v.lat, lon = v.lon, label = v.account_name|default('visit') %}
+              {% include "_geo.html" %}
+            {% endwith %}
+          {% else %}
+            <span class="st-geo st-geo--empty geo geo--empty">No coords</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
 {% endblock %}

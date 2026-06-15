@@ -44,7 +44,7 @@
       {% if recent %}
         <table>
           <thead>
-            <tr><th>When</th><th>Account</th><th>Outcome</th><th>Distance</th></tr>
+            <tr><th>When</th><th>Account</th><th>Outcome</th><th>Distance</th><th>Location</th></tr>
           </thead>
           <tbody>
             {% for v in recent %}
@@ -57,6 +57,17 @@
                   {% if v.distance_km is not null %}
                     <span class="st-num">{{ v.distance_km|number_format(2) }}<span class="st-unit">km</span></span>
                   {% else %}—{% endif %}
+                </td>
+                <td data-label="Location">
+                  {% if v.actual_lat is defined and v.actual_lat is not null and v.actual_lon is not null %}
+                    {% include '@sales_tracker/_st-geo.html.twig' with {
+                      lat: v.actual_lat,
+                      lon: v.actual_lon,
+                      label: v.actual_place_name|default(v.account_name|default('visit'))
+                    } only %}
+                  {% else %}
+                    <span class="st-geo st-geo--empty">No coords</span>
+                  {% endif %}
                 </td>
               </tr>
             {% endfor %}

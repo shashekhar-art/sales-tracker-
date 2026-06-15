@@ -43,13 +43,13 @@
             {{ plan.planned_place_name }}
           </h1>
           <div class="st-hero__meta">
-            {% if plan.planned_lat is not null %}
-              <span class="st-chip st-chip--coord">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
-                </svg>
-                {{ plan.planned_lat|number_format(4) }}, {{ plan.planned_lon|number_format(4) }}
+            {% if plan.planned_lat is not null and plan.planned_lon is not null %}
+              <span class="st-chip st-chip--coord st-chip--enhanced">
+                {% include '@sales_tracker/_st-geo.html.twig' with {
+                  lat: plan.planned_lat,
+                  lon: plan.planned_lon,
+                  label: plan.planned_place_name|default('today\'s plan')
+                } only %}
               </span>
             {% endif %}
             {% if plan.notes %}
@@ -190,12 +190,19 @@
             {% set aid = it.account_id|default(it.id) %}
             {% set aname = it.account_name|default(it.name|default('Account #' ~ aid)) %}
             {% set atype = it.account_type|default(it.type|default('')) %}
+            {% set alat = it.lat|default(it.account_lat|default(null)) %}
+            {% set alon = it.lon|default(it.account_lon|default(null)) %}
             <li class="st-planned-item">
               <div>
                 <a href="{{ path('sales_tracker.accounts.view', {id: aid}) }}" class="st-cell-place__name">{{ aname }}</a>
                 {% if atype %}
                   {% set ttone = atype == 'doctor' ? 'doctor' : (atype == 'chemist' ? 'chemist' : 'stockist') %}
                   <span class="st-account-type-tag st-account-type-tag--{{ ttone }}">{{ atype|capitalize }}</span>
+                {% endif %}
+                {% if alat is not null and alon is not null %}
+                  {% include '@sales_tracker/_st-geo.html.twig' with {
+                    lat: alat, lon: alon, label: aname
+                  } only %}
                 {% endif %}
                 {% if it.notes %}<div class="st-cell-place__sub">{{ it.notes }}</div>{% endif %}
               </div>
@@ -370,8 +377,14 @@
                   </td>
                   <td data-label="Place">
                     <div class="st-cell-place__name">{{ h.actual_place_name|default('—') }}</div>
-                    {% if h.actual_lat is defined and h.actual_lat is not null %}
-                      <div class="st-cell-place__sub">{{ h.actual_lat|number_format(4) }}, {{ h.actual_lon|number_format(4) }}</div>
+                    {% if h.actual_lat is defined and h.actual_lat is not null and h.actual_lon is not null %}
+                      <div class="st-cell-place__sub">
+                        {% include '@sales_tracker/_st-geo.html.twig' with {
+                          lat: h.actual_lat,
+                          lon: h.actual_lon,
+                          label: h.actual_place_name|default('check-in')
+                        } only %}
+                      </div>
                     {% endif %}
                   </td>
                   <td data-label="Source">

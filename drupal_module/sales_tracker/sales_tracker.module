@@ -117,3 +117,21 @@ function sales_tracker_theme($existing, $type, $theme, $path) {
     ],
   ];
 }
+
+/**
+ * Implements hook_form_user_login_form_alter().
+ * After login, redirect to /sales/dashboard so users never land on the
+ * default /user/<id> profile page (which exposes unstyled core tabs).
+ */
+function sales_tracker_form_user_login_form_alter(&$form, FormStateInterface $form_state, $form_id) {
+  $form['#submit'][] = '_sales_tracker_login_redirect';
+}
+
+function _sales_tracker_login_redirect(array &$form, FormStateInterface $form_state) {
+  // Honour any explicit ?destination=... in the URL; otherwise go to the dashboard.
+  $request = \Drupal::request();
+  if ($request->query->has('destination')) {
+    return;
+  }
+  $form_state->setRedirect('sales_tracker.dashboard');
+}

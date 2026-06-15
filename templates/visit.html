@@ -71,6 +71,32 @@
     </div>
 
     <div id="v-gps-fields" style="display:none">
+      <div class="st-geo-section geo-section" data-account-lat-source>
+        <h3 class="st-geo-section__title geo-section__title">
+          <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+            <path d="M8 1.5c-2.6 0-4.7 2.1-4.7 4.7 0 3.4 4.7 8.3 4.7 8.3s4.7-4.9 4.7-8.3C12.7 3.6 10.6 1.5 8 1.5z"
+                  fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+            <circle cx="8" cy="6.2" r="1.7" fill="currentColor"/>
+          </svg>
+          Geolocation
+        </h3>
+        {% set _has_planned_geo = (plan is defined and plan and plan.planned_lat is defined
+                                    and plan.planned_lat is not none and plan.planned_lon is not none) %}
+        {% if _has_planned_geo %}
+          <p class="st-geo-callout geo-callout">
+            <span class="st-geo-callout__label geo-callout__label">Account location:</span>
+            {% with lat = plan.planned_lat, lon = plan.planned_lon,
+                    label = plan.planned_place_name|default('account') %}
+              {% include "_geo.html" %}
+            {% endwith %}
+          </p>
+        {% else %}
+          <p class="st-geo-callout geo-callout muted">
+            <span class="st-geo-callout__label geo-callout__label">Account location:</span>
+            No stored coordinates yet — capture below.
+          </p>
+        {% endif %}
+      </div>
       <div class="grid-2">
         <div class="field field--mono">
           <label for="vlat">Latitude</label>
@@ -139,6 +165,13 @@
         <td data-label="Account">
           <div class="visit-row__account">{{ v.account_name }}</div>
           <div class="cell-place__sub">{{ v.account_address or '' }}</div>
+          {% if v.lat is defined and v.lat is not none and v.lon is defined and v.lon is not none %}
+            <div class="cell-place__geo">
+              {% with lat = v.lat, lon = v.lon, label = v.account_name %}
+                {% include "_geo.html" %}
+              {% endwith %}
+            </div>
+          {% endif %}
         </td>
         <td data-label="Type">
           <span class="account-type-tag account-type-tag--{{ v.account_type }}">{{ v.account_type|capitalize }}</span>

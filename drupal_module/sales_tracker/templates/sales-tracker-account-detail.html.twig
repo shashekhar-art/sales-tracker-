@@ -37,6 +37,18 @@
         <div>{{ account.address }}</div>
       </div>
     {% endif %}
+    {% if account.lat is not null and account.lon is not null %}
+      <div class="st-field">
+        <span class="st-eyebrow st-eyebrow--muted">Geolocation</span>
+        <div>
+          {% include '@sales_tracker/_st-geo.html.twig' with {
+            lat: account.lat,
+            lon: account.lon,
+            label: account.name
+          } only %}
+        </div>
+      </div>
+    {% endif %}
     <div class="st-form-card__footer">
       <a href="/sales/accounts/{{ account.id }}/edit" class="st-btn st-btn--primary">Edit</a>
       <a href="/sales/visit?account_id={{ account.id }}" class="st-btn st-btn--secondary">Log visit</a>
@@ -58,7 +70,18 @@
         <tbody>
           {% for v in visits %}
             <tr class="st-visit-row">
-              <td data-label="When">{{ v.checkin_time }}</td>
+              <td data-label="When">
+                <div class="st-cell-time__rel">{{ v.checkin_time }}</div>
+                {% if v.actual_lat is defined and v.actual_lat is not null and v.actual_lon is not null %}
+                  <div class="st-cell-place__sub">
+                    {% include '@sales_tracker/_st-geo.html.twig' with {
+                      lat: v.actual_lat,
+                      lon: v.actual_lon,
+                      label: v.actual_place_name|default(account.name)
+                    } only %}
+                  </div>
+                {% endif %}
+              </td>
               <td data-label="Employee">{{ v.employee_name|default('—') }}</td>
               <td data-label="Outcome">
                 {% set otone = v.outcome == 'met' ? 'matched' : (v.outcome == 'rescheduled' ? 'manual' : 'unmatched') %}

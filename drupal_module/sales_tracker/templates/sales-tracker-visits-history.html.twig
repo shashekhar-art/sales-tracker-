@@ -64,6 +64,15 @@
             <tr class="st-row--{{ otone }} st-visit-row">
               <td data-label="Date">
                 <div class="st-cell-time__rel">{{ v.checkin_time|default('—') }}</div>
+                {% if v.actual_lat is defined and v.actual_lat is not null and v.actual_lon is not null %}
+                  <div class="st-cell-place__sub">
+                    {% include '@sales_tracker/_st-geo.html.twig' with {
+                      lat: v.actual_lat,
+                      lon: v.actual_lon,
+                      label: v.actual_place_name|default(v.account_name|default('visit'))
+                    } only %}
+                  </div>
+                {% endif %}
               </td>
               <td data-label="Account">
                 <div class="st-cell-place__name">

@@ -4,6 +4,7 @@ namespace Drupal\sales_tracker\Form;
 
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Render\Markup;
 use Drupal\sales_tracker\Service\SalesTrackerApiClient;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -73,6 +74,26 @@ class VisitForm extends FormBase {
     $request = $this->requestStack->getCurrentRequest();
     $preselect = $request ? $request->query->get('account_id') : NULL;
 
+    // Resolve preselected account's lat/lon so we can render an "Account
+    // location" callout above the lat/lon fields. The .js-st-geolocate hook
+    // is unchanged — it still fills the fields from the device on demand.
+    $preselect_account_lat = NULL;
+    $preselect_account_lon = NULL;
+    $preselect_account_name = NULL;
+    if ($preselect && is_numeric($preselect)) {
+      $acc = $this->api->getAccount((int) $preselect);
+      $row = $acc['account'] ?? ($acc['row'] ?? $acc);
+      if (is_array($row)) {
+        $preselect_account_name = $row['name'] ?? NULL;
+        if (isset($row['lat']) && $row['lat'] !== NULL && $row['lat'] !== '') {
+          $preselect_account_lat = $row['lat'];
+        }
+        if (isset($row['lon']) && $row['lon'] !== NULL && $row['lon'] !== '') {
+          $preselect_account_lon = $row['lon'];
+        }
+      }
+    }
+
     $form['account_id'] = [
       '#type' => 'select',
       '#title' => $this->t('Account visited'),
@@ -120,6 +141,60 @@ class VisitForm extends FormBase {
       '#prefix' => '<div class="st-field">',
       '#suffix' => '</div>',
       '#attributes' => ['class' => ['form-text']],
+    ];
+
+    // v3: Geolocation subhead + optional "Account location" callout. The
+    // .js-st-geolocate behavior below still owns the live device fetch — this
+    // block is purely informational and does not change form field names.
+    $geo_section_html = '<div class="st-geo-section">'
+      . '<h3 class="st-geo-section__title">'
+      . '<svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true" focusable="false">'
+      . '<path d="M8 1.5c-2.6 0-4.7 2.1-4.7 4.7 0 3.4 4.7 8.3 4.7 8.3s4.7-4.9 4.7-8.3C12.7 3.6 10.6 1.5 8 1.5z" '
+      . 'fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>'
+      . '<circle cx="8" cy="6.2" r="1.7" fill="currentColor"/>'
+      . '</svg>'
+      . 'Geolocation'
+      . '</h3>';
+    if ($preselect_account_lat !== NULL && $preselect_account_lon !== NULL) {
+      $lat_f = number_format((float) $preselect_account_lat, 4, '.', '');
+      $lon_f = number_format((float) $preselect_account_lon, 4, '.', '');
+      $lat_raw = htmlspecialchars((string) $preselect_account_lat, ENT_QUOTES, 'UTF-8');
+      $lon_raw = htmlspecialchars((string) $preselect_account_lon, ENT_QUOTES, 'UTF-8');
+      $label = htmlspecialchars((string) ($preselect_account_name ?? 'account'), ENT_QUOTES, 'UTF-8');
+      $map_url = 'https://www.google.com/maps/?q=' . $lat_raw . ',' . $lon_raw;
+      $geo_section_html .= '<p class="st-geo-callout">'
+        . '<span class="st-geo-callout__label">Account location:</span>'
+        . '<span class="st-geo" data-lat="' . $lat_raw . '" data-lon="' . $lon_raw . '">'
+        . '<svg class="st-geo__pin" width="14" height="14" viewBox="0 0 16 16" aria-hidden="true" focusable="false">'
+        . '<path d="M8 1.5c-2.6 0-4.7 2.1-4.7 4.7 0 3.4 4.7 8.3 4.7 8.3s4.7-4.9 4.7-8.3C12.7 3.6 10.6 1.5 8 1.5z" '
+        . 'fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>'
+        . '<circle cx="8" cy="6.2" r="1.7" fill="currentColor"/>'
+        . '</svg>'
+        . '<code class="st-geo__coord">' . $lat_f . ', ' . $lon_f . '</code>'
+        . '<a class="st-geo__map" href="' . $map_url . '" target="_blank" rel="noopener noreferrer" '
+        . 'aria-label="View ' . $label . ' on Google Maps (opens in new tab)">'
+        . 'View on map'
+        . '<svg width="11" height="11" viewBox="0 0 16 16" aria-hidden="true" focusable="false">'
+        . '<path d="M6 3h7v7M13 3L6.5 9.5M3 6v7h7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>'
+        . '</svg>'
+        . '</a>'
+        . '</span>'
+        . '</p>';
+    }
+    else {
+      $geo_section_html .= '<p class="st-geo-callout st-muted">'
+        . 'Use <strong>Get my location</strong> below to capture your current coordinates, '
+        . 'or type them in manually.'
+        . '</p>';
+    }
+    $geo_section_html .= '</div>';
+    $form['geo_section'] = [
+      '#type' => 'markup',
+      // Markup::create() bypasses Xss filtering — required so the inline SVG
+      // pin + map-link attributes (target, rel, href, aria-label) survive.
+      // The HTML above is built from htmlspecialchars()'d values, so the only
+      // dynamic content reaching the browser is properly escaped.
+      '#markup' => Markup::create($geo_section_html),
     ];
 
     $form['coords_open'] = [

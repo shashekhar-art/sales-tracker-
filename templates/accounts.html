@@ -67,6 +67,13 @@
         <td data-label="Name">
           <div class="cell-place__name">{{ a.name }}</div>
           {% if a.specialty %}<div class="cell-place__sub">{{ a.specialty }}</div>{% endif %}
+          {% if a.lat is defined and a.lat is not none and a.lon is defined and a.lon is not none %}
+            <div class="cell-place__geo" style="margin-top: 4px;">
+              {% with lat = a.lat, lon = a.lon, label = a.name %}
+                {% include "_geo.html" %}
+              {% endwith %}
+            </div>
+          {% endif %}
         </td>
         <td data-label="District">
           {% if a.district_name %}

@@ -66,6 +66,13 @@
                 {% if a.address %}
                   <div class="st-cell-place__sub">{{ a.address|slice(0, 40) }}{{ a.address|length > 40 ? '…' : '' }}</div>
                 {% endif %}
+                {% if a.lat is not null and a.lon is not null %}
+                  <div class="st-cell-place__sub">
+                    {% include '@sales_tracker/_st-geo.html.twig' with {
+                      lat: a.lat, lon: a.lon, label: a.name
+                    } only %}
+                  </div>
+                {% endif %}
               </td>
               <td data-label="Type">
                 {% set ttone = a.type == 'doctor' ? 'doctor' : (a.type == 'chemist' ? 'chemist' : 'stockist') %}

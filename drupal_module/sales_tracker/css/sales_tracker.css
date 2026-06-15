@@ -1818,3 +1818,298 @@
   .sales-tracker .st-company-banner { font-size: 14px; padding: 10px 12px; }
   .sales-tracker .st-company-banner strong { font-size: 15px; }
 }
+
+/* =========================================================================
+ * 19. v3 — UNIVERSAL BUTTON SWEEP (module scope)
+ *     Scoped under .sales-tracker. Tokens only — no palette redefinition.
+ *     Covers: .st-btn, .st-menubar__btn, <button>, <input type="submit">,
+ *             .button, .form-submit, .js-form-submit.
+ *     Goals:
+ *       - 44px tap target on touch (hover:none + pointer:coarse).
+ *       - hover / focus-visible / active / disabled states.
+ *       - Full-width primary form action on <=480px.
+ *       - NO layout shift on hover (color + inset shadow only).
+ *       - 2px outline + 4px halo focus ring (WCAG AA).
+ * ========================================================================= */
+
+/* ---- 19.1 Shared baseline (custom props so variants override --btn-*) ---- */
+.sales-tracker .st-btn,
+.sales-tracker .st-menubar__btn,
+.sales-tracker .button,
+.sales-tracker .form-submit,
+.sales-tracker button[type="submit"],
+.sales-tracker input[type="submit"],
+.sales-tracker button.js-form-submit {
+  --btn-bg: var(--c-primary);
+  --btn-fg: #FFFFFF;
+  --btn-border: var(--c-primary);
+  --btn-ring: var(--sh-focus-primary);
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  /* Reserve the inset shadow slot up front so hover never resizes the box */
+  box-shadow: 0 0 0 0 transparent;
+}
+
+/* ---- 19.2 HOVER — color shift + inset highlight only, NO size shift ---- */
+.sales-tracker .st-btn:hover,
+.sales-tracker .button:hover,
+.sales-tracker .form-submit:hover,
+.sales-tracker button[type="submit"]:hover,
+.sales-tracker input[type="submit"]:hover {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  transform: none; /* OVERRIDE legacy translateY/scale on hover only */
+  text-decoration: none;
+}
+.sales-tracker .st-btn--secondary:hover,
+.sales-tracker .st-btn--ghost:hover {
+  /* Keep readable text on light surfaces */
+  box-shadow: inset 0 1px 0 rgba(15, 23, 42, 0.04);
+}
+
+/* ---- 19.3 FOCUS-VISIBLE — 2px outline + 4px halo (AA mandate) ---- */
+.sales-tracker .st-btn:focus-visible,
+.sales-tracker .st-menubar__btn:focus-visible,
+.sales-tracker .button:focus-visible,
+.sales-tracker .form-submit:focus-visible,
+.sales-tracker button[type="submit"]:focus-visible,
+.sales-tracker input[type="submit"]:focus-visible {
+  outline: 2px solid var(--c-primary);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.22);
+}
+.sales-tracker .st-btn--danger:focus-visible {
+  outline-color: var(--c-danger);
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.22);
+}
+.sales-tracker .st-btn--accent:focus-visible {
+  outline-color: var(--c-accent);
+  box-shadow: 0 0 0 4px rgba(14, 165, 164, 0.22);
+}
+
+/* ---- 19.4 ACTIVE — pressed-in look, no translate ---- */
+.sales-tracker .st-btn:active,
+.sales-tracker .button:active,
+.sales-tracker .form-submit:active,
+.sales-tracker button[type="submit"]:active,
+.sales-tracker input[type="submit"]:active {
+  box-shadow: inset 0 2px 4px rgba(15, 23, 42, 0.18);
+  transform: translateY(0);
+}
+
+/* ---- 19.5 DISABLED ---- */
+.sales-tracker .st-btn[disabled],
+.sales-tracker .st-btn:disabled,
+.sales-tracker .st-btn[aria-disabled="true"],
+.sales-tracker .st-menubar__btn[aria-disabled="true"],
+.sales-tracker .button[disabled],
+.sales-tracker .button:disabled,
+.sales-tracker .form-submit[disabled],
+.sales-tracker .form-submit:disabled,
+.sales-tracker button[type="submit"][disabled],
+.sales-tracker button[type="submit"]:disabled,
+.sales-tracker input[type="submit"][disabled],
+.sales-tracker input[type="submit"]:disabled {
+  background: var(--c-surface-alt) !important;
+  color: var(--c-text-muted) !important;
+  border-color: var(--c-border) !important;
+  cursor: not-allowed;
+  pointer-events: none;
+  box-shadow: none !important;
+  transform: none !important;
+  opacity: 0.85;
+}
+
+/* ---- 19.6 TOUCH: 44px tap target on coarse pointers (mobile + tablet) ---- */
+@media (hover: none) and (pointer: coarse) {
+  .sales-tracker .st-btn,
+  .sales-tracker .button,
+  .sales-tracker .form-submit,
+  .sales-tracker button[type="submit"],
+  .sales-tracker input[type="submit"] {
+    min-height: 44px;
+    height: auto;
+    padding: 12px 18px;
+  }
+  .sales-tracker .st-btn--sm {
+    min-height: 44px;
+    height: auto;
+    padding: 10px 14px;
+    font-size: var(--fs-xs);
+  }
+  .sales-tracker .st-btn--lg {
+    min-height: 48px;
+    height: auto;
+    padding: 14px 22px;
+  }
+  /* Kill sticky hover transforms on touch — bottom-nav too */
+  .sales-tracker .st-btn:hover,
+  .sales-tracker .st-menubar__btn:hover,
+  .sales-tracker .button:hover,
+  .sales-tracker .form-submit:hover { transform: none; }
+}
+
+/* ---- 19.7 <=480px: primary form actions stretch full-width ---- */
+@media (max-width: 480px) {
+  .sales-tracker .st-form-card__footer,
+  .sales-tracker .form-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--sp-2);
+  }
+  .sales-tracker .st-form-card__footer .st-btn,
+  .sales-tracker .st-form-card__footer .button,
+  .sales-tracker .st-form-card__footer .form-submit,
+  .sales-tracker .st-form-card__footer button[type="submit"],
+  .sales-tracker .st-form-card__footer input[type="submit"],
+  .sales-tracker .form-actions .st-btn,
+  .sales-tracker .form-actions .button,
+  .sales-tracker .form-actions .form-submit,
+  .sales-tracker .form-actions button[type="submit"],
+  .sales-tracker .form-actions input[type="submit"],
+  .sales-tracker form button[type="submit"],
+  .sales-tracker form input[type="submit"],
+  .sales-tracker form .st-btn--primary {
+    display: flex;
+    width: 100%;
+    min-height: 48px;
+    padding: 12px 20px;
+    font-size: 15px;
+  }
+  .sales-tracker form .st-btn--ghost { width: 100%; }
+}
+
+/* ---- 19.8 Reduced motion ---- */
+@media (prefers-reduced-motion: reduce) {
+  .sales-tracker .st-btn,
+  .sales-tracker .st-menubar__btn,
+  .sales-tracker .button,
+  .sales-tracker .form-submit { transition: none; }
+}
+
+/* =========================================================================
+ * 20. v3 — GEOLOCATION COMPONENT
+ *     Reusable wherever a place is mentioned. Inline-SVG pin + monospace
+ *     coord chip + "View on map" link.
+ *     Classes: .st-geo, .st-geo__pin, .st-geo__coord, .st-geo__map,
+ *              .st-geo--empty, .st-geo-section, .st-geo-section__title,
+ *              .st-geo-callout, .st-chip--enhanced, .st-district__pin
+ * ========================================================================= */
+.sales-tracker .st-geo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-xs);
+  line-height: 1.4;
+  color: var(--c-text-muted);
+  flex-wrap: wrap;
+}
+.sales-tracker .st-geo__pin {
+  color: var(--c-primary);
+  flex: 0 0 14px;
+}
+.sales-tracker .st-geo__coord {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 2px 6px;
+  background: var(--c-surface-alt);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-sm);
+  color: var(--c-text);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+.sales-tracker .st-geo__map {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  min-height: 24px;
+  padding: 2px 4px;
+  border-radius: var(--r-sm);
+  color: var(--c-primary-dark);
+  font-weight: 600;
+  text-decoration: none;
+  border-bottom: 1px dotted currentColor;
+}
+.sales-tracker .st-geo__map:hover {
+  color: var(--c-primary);
+  border-bottom-style: solid;
+  text-decoration: none;
+}
+.sales-tracker .st-geo__map:focus-visible {
+  outline: 2px solid var(--c-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+.sales-tracker .st-geo--empty {
+  font-style: italic;
+  color: var(--c-text-muted);
+}
+
+/* Block-context variant used on the Visit form (iris-tinted callout) */
+.sales-tracker .st-geo-section {
+  margin: var(--sp-4) 0 var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--c-primary-50);
+  border-left: 3px solid var(--c-primary);
+  border-radius: 0 var(--r-md) var(--r-md) 0;
+}
+.sales-tracker .st-geo-section__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-eyebrow);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--ls-eyebrow);
+  color: var(--c-primary-dark);
+  margin: 0 0 var(--sp-2);
+}
+.sales-tracker .st-geo-callout {
+  margin: 0;
+  font-size: var(--fs-sm);
+}
+.sales-tracker .st-geo-callout__label {
+  font-weight: 600;
+  color: var(--c-text);
+  margin-right: 6px;
+}
+.sales-tracker .st-geo-section--empty {
+  background: var(--c-surface-alt);
+  border-left-color: var(--c-border-strong);
+  color: var(--c-text-muted);
+  font-size: var(--fs-xs);
+}
+
+/* Dashboard hero — bigger pill so the coord chip reads as a hero element */
+.sales-tracker .st-chip--coord.st-chip--enhanced {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: auto;
+  padding: 4px 10px;
+  font-size: 13px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid var(--c-border);
+  border-radius: 999px;
+}
+
+/* District page pin sized up to match the H1 */
+.sales-tracker .st-district__pin {
+  color: var(--c-primary);
+  vertical-align: -3px;
+  margin-right: 4px;
+}
+.sales-tracker .st-district__header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+/* Mobile: allow the geo row to wrap; bump tap height of the map link */
+@media (max-width: 480px) {
+  .sales-tracker .st-geo { gap: 4px; }
+  .sales-tracker .st-geo__map {
+    min-height: 32px;
+    padding: 4px 6px;
+  }
+}
