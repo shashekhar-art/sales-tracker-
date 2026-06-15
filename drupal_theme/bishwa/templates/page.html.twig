@@ -1,0 +1,88 @@
+{#
+/**
+ * @file
+ * Bishwa Medicare theme's page template.
+ * Branded header + footer wrapping the main content.
+ */
+#}
+<div class="bm-page">
+
+  <header class="bm-header" role="banner">
+    <div class="bm-header__inner">
+      <a href="{{ path('<front>') }}" class="bm-brand" aria-label="{{ site_name }} home">
+        <span class="bm-brand__mark" aria-hidden="true">
+          <svg viewBox="0 0 40 40" width="36" height="36">
+            <defs>
+              <linearGradient id="bm-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#4F46E5"/>
+                <stop offset="100%" stop-color="#0EA5A4"/>
+              </linearGradient>
+            </defs>
+            <rect x="2" y="2" width="36" height="36" rx="9" fill="url(#bm-grad)"/>
+            <path d="M14 12v16M26 12v16M14 20h12" stroke="white" stroke-width="2.6" stroke-linecap="round"/>
+            <circle cx="20" cy="20" r="3" fill="white"/>
+          </svg>
+        </span>
+        <span class="bm-brand__text">
+          <span class="bm-brand__name">{{ site_name }}</span>
+          {% if site_slogan %}<span class="bm-brand__slogan">{{ site_slogan }}</span>{% endif %}
+        </span>
+      </a>
+
+      {% if page.primary_menu %}
+        <nav class="bm-nav" role="navigation" aria-label="{{ 'Primary menu'|t }}">
+          {{ page.primary_menu }}
+        </nav>
+      {% endif %}
+
+      <div class="bm-header__right">
+        {% if is_logged_in %}
+          <span class="bm-userpill" aria-label="{{ 'Logged in as'|t }} {{ current_user_name }}">
+            <span class="bm-userpill__avatar" aria-hidden="true">{{ current_user_name|first|upper }}</span>
+            <span class="bm-userpill__name">{{ current_user_name }}</span>
+          </span>
+          <a href="{{ path('user.logout') }}" class="bm-btn bm-btn--ghost">{{ 'Logout'|t }}</a>
+        {% else %}
+          <a href="{{ path('user.login') }}" class="bm-btn bm-btn--primary">{{ 'Sign in'|t }}</a>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+
+  {% if page.breadcrumb %}
+    <div class="bm-breadcrumb">{{ page.breadcrumb }}</div>
+  {% endif %}
+
+  {% if page.highlighted %}
+    <div class="bm-highlighted">{{ page.highlighted }}</div>
+  {% endif %}
+
+  <main class="bm-main" role="main">
+    <a id="main-content" tabindex="-1"></a>
+    <div class="bm-main__inner">
+      {{ page.content }}
+    </div>
+  </main>
+
+  <footer class="bm-footer" role="contentinfo">
+    <div class="bm-footer__inner">
+      <div class="bm-footer__cols">
+        {% if page.footer_first %}
+          <div class="bm-footer__col">{{ page.footer_first }}</div>
+        {% endif %}
+        {% if page.footer_second %}
+          <div class="bm-footer__col">{{ page.footer_second }}</div>
+        {% endif %}
+        <div class="bm-footer__col bm-footer__col--brand">
+          <strong>{{ site_name }}</strong>
+          <p>Pharmaceutical sales tracking &middot; designed for medical representatives across India.</p>
+        </div>
+      </div>
+      <div class="bm-footer__bottom">
+        <span>&copy; {{ current_year }} {{ site_name }}. All rights reserved.</span>
+        {% if page.footer_bottom %}{{ page.footer_bottom }}{% endif %}
+      </div>
+    </div>
+  </footer>
+
+</div>

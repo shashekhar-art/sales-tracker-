@@ -1,0 +1,35 @@
+{# Quick-access button menu bar.
+   Each page that includes this file should do:
+     {% set active_menu = 'dashboard' %}   (or plan, visit, accounts, reports, history, admin, proctor, targets)
+     {% include "_menubar.html" %}
+#}
+{% set role = session.role|default('employee') %}
+{% set is_admin = role == 'admin' %}
+{% set is_proctor = role in ['admin', 'proctor'] %}
+{% set items = [
+  {'key': 'dashboard', 'url': url_for('dashboard'),     'label': 'Dashboard', 'icon': 'home',     'show': true},
+  {'key': 'plan',      'url': url_for('plan'),          'label': 'Plan',      'icon': 'plan',     'show': not is_admin and not is_proctor},
+  {'key': 'visit',     'url': url_for('visit'),         'label': 'Log visit', 'icon': 'pin',      'show': not is_admin and not is_proctor},
+  {'key': 'accounts',  'url': url_for('accounts_list'), 'label': 'Accounts',  'icon': 'people',   'show': true},
+  {'key': 'reports',   'url': url_for('reports'),       'label': 'Reports',   'icon': 'chart',    'show': true},
+  {'key': 'history',   'url': url_for('history'),       'label': 'History',   'icon': 'clock',    'show': not is_admin and not is_proctor},
+  {'key': 'proctor',   'url': url_for('proctor_index'), 'label': 'Proctor',   'icon': 'globe',    'show': is_proctor},
+  {'key': 'admin',     'url': url_for('admin'),         'label': 'Admin',     'icon': 'shield',   'show': is_admin},
+] %}
+<nav class="menubar" aria-label="Quick menu">
+  {% for item in items %}{% if item.show %}
+    <a href="{{ item.url }}" class="menubar__btn{% if active_menu == item.key %} menubar__btn--active{% endif %}">
+      <span class="menubar__btn-icon" aria-hidden="true">
+        {% if item.icon == 'home' %}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>{% endif %}
+        {% if item.icon == 'plan' %}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 2v4M16 2v4M4 9h16"/><path d="M8 14h5M8 18h7"/></svg>{% endif %}
+        {% if item.icon == 'pin' %}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s7-7.5 7-13a7 7 0 1 0-14 0c0 5.5 7 13 7 13z"/><circle cx="12" cy="9" r="2.5"/></svg>{% endif %}
+        {% if item.icon == 'people' %}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.5 3-6 6.5-6s6.5 2.5 6.5 6"/><circle cx="17" cy="7" r="2.5"/><path d="M21.5 18.5c0-2.5-2-4-4.5-4"/></svg>{% endif %}
+        {% if item.icon == 'chart' %}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V4"/><path d="M20 20H4"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="5" width="3" height="13"/></svg>{% endif %}
+        {% if item.icon == 'clock' %}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>{% endif %}
+        {% if item.icon == 'globe' %}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3.5 12h17M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>{% endif %}
+        {% if item.icon == 'shield' %}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v6c0 5 3.5 8.5 8 9 4.5-.5 8-4 8-9V6l-8-3z"/><path d="m9 12 2 2 4-4"/></svg>{% endif %}
+      </span>
+      <span class="menubar__btn-label">{{ item.label }}</span>
+    </a>
+  {% endif %}{% endfor %}
+</nav>

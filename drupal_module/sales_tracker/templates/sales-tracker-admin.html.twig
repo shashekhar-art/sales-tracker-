@@ -1,0 +1,178 @@
+<div class="sales-tracker">
+{{ menubar }}
+
+  {# === Today's status === #}
+  {% if summary %}
+    <section class="st-card st-datatable" aria-labelledby="summaryTitle">
+      <header class="st-datatable__head">
+        <h2 id="summaryTitle" class="st-card__title">Today's status</h2>
+        <span class="st-card__sub">All employees</span>
+      </header>
+      <table>
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Plan today</th>
+            <th class="r">Check-ins</th>
+            <th class="r">Best score</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in summary %}
+            {% if s.best_score_today is not null %}
+              {% set raw = s.best_score_today %}
+              {% set pct = ((raw * 100) + 0.5) | round(0, 'floor') %}
+            {% else %}
+              {% set raw = 0 %}
+              {% set pct = 0 %}
+            {% endif %}
+            {% if s.best_score_today is null %}
+              {% set tone = 'low' %}
+              {% set row_tone = '' %}
+            {% elseif pct >= 80 %}
+              {% set tone = 'high' %}
+              {% set row_tone = 'ok' %}
+            {% elseif pct >= 50 %}
+              {% set tone = 'mid' %}
+              {% set row_tone = 'mid' %}
+            {% else %}
+              {% set tone = 'low' %}
+              {% set row_tone = 'bad' %}
+            {% endif %}
+            {% set score = pct / 100 %}
+            {% set value_dash = 197.92 * score %}
+
+            <tr class="{% if row_tone %}st-row--{{ row_tone }}{% endif %}">
+              <td data-label="Status">
+                {% if s.best_score_today is not null %}
+                  <span class="st-score-cell" aria-label="Best match score {{ pct }} percent">
+                    <svg class="st-gauge st-gauge--{{ tone }}" width="36" height="36" viewBox="-4 -4 108 108" aria-hidden="true" focusable="false">
+                      <circle class="st-gauge__track" cx="50" cy="50" r="42" fill="none" stroke-width="10"
+                              stroke-linecap="round" stroke-dasharray="197.92 263.89" transform="rotate(135 50 50)"/>
+                      <circle class="st-gauge__value" cx="50" cy="50" r="42" fill="none" stroke-width="10"
+                              stroke-linecap="round"
+                              stroke-dasharray="{{ value_dash|number_format(2, '.', '') }} 263.89" transform="rotate(135 50 50)"/>
+                    </svg>
+                    <span class="st-num st-score-cell__num">{{ pct }}<span class="st-unit">%</span></span>
+                  </span>
+                {% else %}
+                  <span class="st-badge st-badge--neutral" aria-label="No check-in yet">
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75"
+                         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <circle cx="8" cy="8" r="7"/><path d="M8 5v3.5"/><circle cx="8" cy="11" r="0.6" fill="currentColor"/>
+                    </svg>
+                    Awaiting
+                  </span>
+                {% endif %}
+              </td>
+              <td data-label="Name">
+                <div class="st-cell-place__name">{{ s.name }}</div>
+              </td>
+              <td data-label="Email">
+                <div class="st-cell-place__sub" style="font-family: inherit;">{{ s.email }}</div>
+              </td>
+              <td data-label="Plan today">
+                {% if s.planned_place_name %}
+                  <div class="st-cell-place__name">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                         style="color: var(--c-primary); vertical-align: -2px; margin-right: 4px;" aria-hidden="true">
+                      <path d="M12 21s-7-7.5-7-12a7 7 0 1 1 14 0c0 4.5-7 12-7 12z"/>
+                      <circle cx="12" cy="9" r="2.5"/>
+                    </svg>
+                    {{ s.planned_place_name }}
+                  </div>
+                {% else %}
+                  <span class="st-badge st-badge--unmatched" role="status">
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75"
+                         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <circle cx="8" cy="8" r="7"/><path d="M5.5 5.5l5 5M10.5 5.5l-5 5"/>
+                    </svg>
+                    Not declared
+                  </span>
+                {% endif %}
+              </td>
+              <td data-label="Check-ins" class="r st-num">{{ s.today_checkins }}</td>
+              <td data-label="Best score" class="r st-num">
+                {% if s.best_score_today is not null %}
+                  {{ s.best_score_today|number_format(2) }}
+                {% else %}
+                  <span class="st-muted">—</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+  {% else %}
+    <section class="st-card">
+      <div class="st-empty">
+        <svg class="st-empty__art" viewBox="0 0 120 120" fill="none" stroke="currentColor" aria-hidden="true">
+          <circle class="em-fill-soft" cx="42" cy="48" r="10" stroke-width="1.5"/>
+          <circle class="em-fill-soft" cx="60" cy="42" r="12" stroke-width="1.5"/>
+          <circle class="em-fill-soft" cx="78" cy="48" r="10" stroke-width="1.5"/>
+          <path d="M28 88 q14 -16 32 -16 t32 16" fill="none" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <div class="st-empty__title">No employees added</div>
+        <div class="st-empty__body">Add your first sales rep to start tracking.</div>
+      </div>
+    </section>
+  {% endif %}
+
+  {# === Anomaly flags === #}
+  <section class="st-card" aria-labelledby="anomaliesTitle">
+    <header class="st-card__head">
+      <h2 id="anomaliesTitle" class="st-card__title">Recent anomaly flags</h2>
+      <span class="st-card__sub">Last 24 hours</span>
+    </header>
+    {% if flags %}
+      <div class="st-anomaly-list" aria-live="polite">
+        {% for f in flags %}
+          <div class="st-anomaly-row" role="group" aria-label="Anomaly: {{ f.reason }}">
+            <span class="st-anomaly-row__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 3 L22 20 H2 Z"/><path d="M12 10v4"/><circle cx="12" cy="17" r="0.8" fill="currentColor"/>
+              </svg>
+            </span>
+            <div>
+              <div class="st-anomaly-row__reason">{{ f.reason }}</div>
+              <div class="st-anomaly-row__meta">
+                <strong>{{ f.employee_name }}</strong>
+                {% if f.actual_place_name %}
+                  &middot; {{ f.actual_place_name }}
+                {% endif %}
+                &middot; {{ f.created_at }}
+              </div>
+            </div>
+            <div>
+              <span class="st-badge st-badge--anomaly" role="status">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75"
+                     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M8 2 L14.5 13.5 H1.5 Z"/><path d="M8 6.5v3.5"/><circle cx="8" cy="12" r="0.6" fill="currentColor"/>
+                </svg>
+                Anomaly
+                <span class="st-sr-only">Requires review</span>
+              </span>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="st-empty" style="color: var(--c-success);">
+        <svg class="st-empty__art" viewBox="0 0 120 120" fill="none" stroke="currentColor" aria-hidden="true">
+          <path d="M60 16 L96 30 V60 C96 82 60 104 60 104 S24 82 24 60 V30 Z"
+                fill="var(--c-success-bg)" stroke-width="1.75"/>
+          <path d="M44 60 L56 72 L78 48" stroke-width="2.5"
+                stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </svg>
+        <div class="st-empty__title">All clear</div>
+        <div class="st-empty__body">No unusual patterns detected in the last 24 hours.</div>
+      </div>
+    {% endif %}
+  </section>
+
+</div>

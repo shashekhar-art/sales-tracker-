@@ -1,0 +1,157 @@
+<div class="sales-tracker">
+{{ menubar }}
+  {% if rows %}
+    <section class="st-card st-datatable" aria-labelledby="historyTitle">
+      <header class="st-datatable__head">
+        <h2 id="historyTitle" class="st-card__title">My check-in history</h2>
+        <span class="st-card__sub">All time</span>
+      </header>
+      <table>
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Plan date</th>
+            <th>Planned</th>
+            <th>Actual</th>
+            <th>Distance (km)</th>
+            <th>Text sim</th>
+            <th>Time</th>
+            <th class="r">Match</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in rows %}
+            {% if r.match_score is not null %}
+              {% set raw = r.match_score %}
+              {% set pct = ((raw * 100) + 0.5) | round(0, 'floor') %}
+            {% else %}
+              {% set raw = 0 %}
+              {% set pct = 0 %}
+            {% endif %}
+            {% if pct >= 80 %}
+              {% set tone = 'high' %}
+              {% set row_tone = 'ok' %}
+            {% elseif pct >= 50 %}
+              {% set tone = 'mid' %}
+              {% set row_tone = 'mid' %}
+            {% else %}
+              {% set tone = 'low' %}
+              {% set row_tone = 'bad' %}
+            {% endif %}
+            {% set score = pct / 100 %}
+            {% set value_dash = 197.92 * score %}
+            {% set matched = (r.match_score is not null) and (pct >= 80) %}
+
+            {% if r.distance_km is not null %}
+              {% set d = r.distance_km %}
+            {% else %}
+              {% set d = 0 %}
+            {% endif %}
+            {% if d < 10 %}
+              {% set fill_pct = (10 - d) * 10 %}
+            {% else %}
+              {% set fill_pct = 0 %}
+            {% endif %}
+            {% if d <= 0.5 %}
+              {% set dcolor = '#10B981' %}{% set dqual = 'near' %}{% set dqualtxt = 'Near' %}
+            {% elseif d <= 2 %}
+              {% set dcolor = '#F59E0B' %}{% set dqual = 'mid' %}{% set dqualtxt = 'Mid' %}
+            {% else %}
+              {% set dcolor = '#EF4444' %}{% set dqual = 'far' %}{% set dqualtxt = 'Far' %}
+            {% endif %}
+
+            <tr class="st-row--{{ row_tone }}">
+              <td data-label="Status">
+                {% if r.match_score is not null %}
+                  <span class="st-score-cell" aria-label="Match score {{ pct }} percent">
+                    <svg class="st-gauge st-gauge--{{ tone }}" width="36" height="36" viewBox="-4 -4 108 108" aria-hidden="true" focusable="false">
+                      <circle class="st-gauge__track" cx="50" cy="50" r="42" fill="none" stroke-width="10"
+                              stroke-linecap="round" stroke-dasharray="197.92 263.89" transform="rotate(135 50 50)"/>
+                      <circle class="st-gauge__value" cx="50" cy="50" r="42" fill="none" stroke-width="10"
+                              stroke-linecap="round"
+                              stroke-dasharray="{{ value_dash|number_format(2, '.', '') }} 263.89" transform="rotate(135 50 50)"/>
+                    </svg>
+                    <span class="st-num st-score-cell__num">{{ pct }}<span class="st-unit">%</span></span>
+                    <span class="st-score-cell__tag st-score-cell__tag--{{ tone }}" aria-hidden="true">
+                      {% if tone == 'high' %}High{% elseif tone == 'mid' %}Mid{% else %}Low{% endif %}
+                    </span>
+                  </span>
+                {% else %}
+                  <span class="st-muted">—</span>
+                {% endif %}
+              </td>
+              <td data-label="Plan date">
+                <div class="st-cell-time__rel">{{ r.plan_date|default('—') }}</div>
+              </td>
+              <td data-label="Planned">
+                <div class="st-cell-place__name">{{ r.planned_place_name|default('—') }}</div>
+              </td>
+              <td data-label="Actual">
+                <div class="st-cell-place__name">{{ r.actual_place_name|default('—') }}</div>
+              </td>
+              <td data-label="Distance">
+                {% if r.distance_km is not null %}
+                  <span class="st-prox" title="Fuller bar means closer to planned location">
+                    <svg class="st-prox__bar" width="120" height="10" viewBox="0 0 120 10"
+                         role="img" aria-label="{{ d|number_format(2) }} kilometres from planned location — {{ dqualtxt }}">
+                      <rect class="st-prox__bar-track" x="0" y="2" width="120" height="6" rx="3"/>
+                      <rect x="0" y="2" width="{{ (fill_pct * 1.2)|number_format(2, '.', '') }}" height="6" rx="3" fill="{{ dcolor }}"/>
+                    </svg>
+                    <span class="st-num"><span class="st-prox__num">{{ d|number_format(2) }}</span><span class="st-unit">km</span></span>
+                    <span class="st-prox__qual st-prox__qual--{{ dqual }}">{{ dqualtxt }}</span>
+                  </span>
+                {% else %}
+                  <span class="st-muted">—</span>
+                {% endif %}
+              </td>
+              <td data-label="Text sim" class="st-num">
+                {% if r.text_similarity is not null %}
+                  {{ r.text_similarity|number_format(2) }}
+                {% else %}
+                  <span class="st-muted">—</span>
+                {% endif %}
+              </td>
+              <td data-label="Time">
+                <div class="st-cell-time__rel">{{ r.checkin_time }}</div>
+              </td>
+              <td data-label="Match" class="r">
+                {% if matched %}
+                  <span class="st-badge st-badge--matched" role="status">
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75"
+                         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <circle cx="8" cy="8" r="7"/><path d="M5 8.5l2 2 4-4.5"/>
+                    </svg>
+                    Matched
+                  </span>
+                {% else %}
+                  <span class="st-badge st-badge--unmatched" role="status">
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75"
+                         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <circle cx="8" cy="8" r="7"/><path d="M5.5 5.5l5 5M10.5 5.5l-5 5"/>
+                    </svg>
+                    Not matched
+                  </span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+  {% else %}
+    <section class="st-card">
+      <div class="st-empty">
+        <svg class="st-empty__art" viewBox="0 0 120 120" fill="none" stroke="currentColor" aria-hidden="true">
+          <rect class="em-fill-soft" x="24" y="32" width="72" height="64" rx="6" stroke-width="1.5"/>
+          <line x1="24" y1="48" x2="96" y2="48" stroke-width="1.5"/>
+          <line x1="44" y1="24" x2="44" y2="40" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="76" y1="24" x2="76" y2="40" stroke-width="1.5" stroke-linecap="round"/>
+          <circle cx="80" cy="78" r="9" fill="none" stroke-width="1.5"/>
+          <line x1="86" y1="84" x2="92" y2="90" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <div class="st-empty__title">No check-ins recorded yet</div>
+        <div class="st-empty__body">Once you check in from the dashboard, your history will appear here.</div>
+      </div>
+    </section>
+  {% endif %}
+</div>

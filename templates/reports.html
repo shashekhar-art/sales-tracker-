@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% block title %}Reports &middot; Bishwa Medicare Pvt Ltd{% endblock %}
+{% block content %}
+  {% set active_menu = "reports" %}
+  {% include "_menubar.html" %}
+
+<section class="card">
+  <header class="card__head">
+    <div>
+      <span class="eyebrow eyebrow--muted">Performance</span>
+      <h1 style="margin-top: 4px;">Reports</h1>
+    </div>
+    <a class="btn btn--secondary"
+       href="{{ url_for('reports_csv_html', type='visits', period=active_period) }}">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M8 2v9M5 8l3 3 3-3M2 14h12"/>
+      </svg>
+      Download CSV
+    </a>
+  </header>
+
+  {# Tabs (scroll-snap on mobile). #}
+  <div class="tabs" role="tablist" aria-label="Time period">
+    {% for p in ['day','week','month','quarter'] %}
+      <a class="tabs__item {% if active_period == p %}tabs__item--active{% endif %}"
+         href="{{ url_for('reports', period=p) }}"
+         role="tab" aria-selected="{{ 'true' if active_period == p else 'false' }}">
+        {{ {'day':'Day','week':'Week','month':'Month','quarter':'Quarter'}[p] }}
+      </a>
+    {% endfor %}
+  </div>
+
+  {# Stat tiles. #}
+  {% set c = stats.counts %}
+  <div class="kpis" style="margin-top: 24px;">
+    <div class="card kpi stat-tile">
+      <div class="kpi__label stat-tile__label">Total visits</div>
+      <div class="kpi__value stat-tile__num num">{{ c.total }}</div>
+      <div class="kpi__sub">{{ stats['from'] }} → {{ stats['to'] }}</div>
+    </div>
+    <div class="card kpi stat-tile">
+      <div class="kpi__label stat-tile__label">Doctors</div>
+      <div class="kpi__value stat-tile__num num">{{ c.doctor }}</div>
+      <div class="kpi__sub">unique visits</div>
+    </div>
+    <div class="card kpi stat-tile">
+      <div class="kpi__label stat-tile__label">Chemists</div>
+      <div class="kpi__value stat-tile__num num">{{ c.chemist }}</div>
+      <div class="kpi__sub">unique visits</div>
+    </div>
+    <div class="card kpi stat-tile">
+      <div class="kpi__label stat-tile__label">Stockists</div>
+      <div class="kpi__value stat-tile__num num">{{ c.stockist }}</div>
+      <div class="kpi__sub">unique visits</div>
+    </div>
+  </div>
+
+  {% if stats.target %}
+  <div class="period-summary" style="margin-top: 24px;">
+    <div>
+      <span class="eyebrow eyebrow--muted">Target ({{ stats.target.scope }})</span>
+      <div class="period-summary__num num">
+        {{ c.total }}<span class="muted"> / {{ stats.target.target_count }}</span>
+      </div>
+    </div>
+    <div class="period-summary__delta">
+      {% if stats.achievement_pct is not none %}
+        {{ "%.1f"|format(stats.achievement_pct) }}% achieved
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+</section>
+
+{# ============ Bar chart: visits by account type ============ #}
+<section class="card" style="margin-top: 24px;" aria-labelledby="byTypeTitle">
+  <header class="card__head">
+    <h2 id="byTypeTitle" class="card__title">Visits by account type</h2>
+    <span class="card__sub">{{ active_period|capitalize }}</span>
+  </header>
+
+  {% set max_count = [c.doctor, c.chemist, c.stockist, 1] | max %}
+  {% set bar_rows = [
+    ('Doctors',   c.doctor,   '#4F46E5'),
+    ('Chemists',  c.chemist,  '#0EA5A4'),
+    ('Stockists', c.stockist, '#F59E0B'),
+  ] %}
+
+  <div class="chart-bar" role="img" aria-label="Bar chart of visits by account type">
+    {% for label, val, color in bar_rows %}
+      {% set pct = (val / max_count * 100) if max_count > 0 else 0 %}
+      <div class="chart-bar__row">
+        <div class="chart-bar__label">{{ label }}</div>
+        <svg class="chart-bar__svg" viewBox="0 0 100 12" preserveAspectRatio="none"
+             aria-hidden="true" focusable="false">
+          <rect x="0" y="3" width="100" height="6" rx="3" fill="var(--c-surface-alt)"/>
+          <rect x="0" y="3" width="{{ '%.2f'|format(pct) }}" height="6" rx="3" fill="{{ color }}"/>
+        </svg>
+        <div class="chart-bar__num num">{{ val }}</div>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+
+{# ============ Donut chart: outcomes ============ #}
+{% set out_total = (outcomes.met + outcomes.not_met + outcomes.rescheduled + outcomes.unset) %}
+<section class="card" style="margin-top: 24px;" aria-labelledby="outcomesTitle">
+  <header class="card__head">
+    <h2 id="outcomesTitle" class="card__title">Outcomes</h2>
+    <span class="card__sub">{{ out_total }} visits</span>
+  </header>
+
+  {% if out_total > 0 %}
+    {# Donut geometry: circle r=42, circumference = 263.89. We render four arcs. #}
+    {% set circ = 263.89 %}
+    {% set seg_met         = (outcomes.met         / out_total) * circ %}
+    {% set seg_not_met     = (outcomes.not_met     / out_total) * circ %}
+    {% set seg_rescheduled = (outcomes.rescheduled / out_total) * circ %}
+    {% set seg_unset       = (outcomes.unset       / out_total) * circ %}
+
+    {# Pre-compute the start offsets (negative dasharray-offset is "rotate around"). #}
+    {% set off_met         = 0 %}
+    {% set off_not_met     = -seg_met %}
+    {% set off_rescheduled = -(seg_met + seg_not_met) %}
+    {% set off_unset       = -(seg_met + seg_not_met + seg_rescheduled) %}
+
+    <div class="chart-donut-wrap">
+      <svg class="chart-donut" width="160" height="160" viewBox="0 0 100 100"
+           role="img" aria-label="Donut chart of visit outcomes">
+        <circle cx="50" cy="50" r="42" fill="none" stroke="var(--c-surface-alt)" stroke-width="14"/>
+        {# Each colored arc: full-circle dash, offset to rotate to the right position. Rotate -90 so 0 starts at 12 o'clock. #}
+        <g transform="rotate(-90 50 50)">
+          {% if seg_met > 0 %}
+          <circle cx="50" cy="50" r="42" fill="none" stroke="#10B981" stroke-width="14"
+                  stroke-dasharray="{{ '%.2f'|format(seg_met) }} {{ '%.2f'|format(circ - seg_met) }}"
+                  stroke-dashoffset="{{ '%.2f'|format(off_met) }}"/>
+          {% endif %}
+          {% if seg_not_met > 0 %}
+          <circle cx="50" cy="50" r="42" fill="none" stroke="#EF4444" stroke-width="14"
+                  stroke-dasharray="{{ '%.2f'|format(seg_not_met) }} {{ '%.2f'|format(circ - seg_not_met) }}"
+                  stroke-dashoffset="{{ '%.2f'|format(off_not_met) }}"/>
+          {% endif %}
+          {% if seg_rescheduled > 0 %}
+          <circle cx="50" cy="50" r="42" fill="none" stroke="#F59E0B" stroke-width="14"
+                  stroke-dasharray="{{ '%.2f'|format(seg_rescheduled) }} {{ '%.2f'|format(circ - seg_rescheduled) }}"
+                  stroke-dashoffset="{{ '%.2f'|format(off_rescheduled) }}"/>
+          {% endif %}
+          {% if seg_unset > 0 %}
+          <circle cx="50" cy="50" r="42" fill="none" stroke="#94A3B8" stroke-width="14"
+                  stroke-dasharray="{{ '%.2f'|format(seg_unset) }} {{ '%.2f'|format(circ - seg_unset) }}"
+                  stroke-dashoffset="{{ '%.2f'|format(off_unset) }}"/>
+          {% endif %}
+        </g>
+        <text x="50" y="48" text-anchor="middle" font-size="14" font-weight="700" fill="var(--c-text)">{{ out_total }}</text>
+        <text x="50" y="62" text-anchor="middle" font-size="6" fill="var(--c-text-muted)" letter-spacing="1">VISITS</text>
+      </svg>
+
+      <ul class="chart-donut-legend" aria-label="Legend">
+        <li><span class="legend-dot" style="background:#10B981"></span> Met <span class="num">{{ outcomes.met }}</span></li>
+        <li><span class="legend-dot" style="background:#EF4444"></span> Not met <span class="num">{{ outcomes.not_met }}</span></li>
+        <li><span class="legend-dot" style="background:#F59E0B"></span> Rescheduled <span class="num">{{ outcomes.rescheduled }}</span></li>
+        <li><span class="legend-dot" style="background:#94A3B8"></span> No outcome <span class="num">{{ outcomes.unset }}</span></li>
+      </ul>
+    </div>
+  {% else %}
+    <div class="empty">
+      <svg class="empty__art" viewBox="0 0 120 120" fill="none" stroke="currentColor" aria-hidden="true">
+        <circle cx="60" cy="60" r="36" stroke-width="1.5"/>
+        <circle cx="60" cy="60" r="18" stroke-width="1.5" opacity="0.5"/>
+      </svg>
+      <div class="empty__title">No visits in this period</div>
+      <div class="empty__body">Try widening the period or log a visit.</div>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

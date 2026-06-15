@@ -1,0 +1,158 @@
+<div class="sales-tracker">
+{{ menubar }}
+
+  <section class="st-card st-card--focal">
+    <header class="st-card__head">
+      <h1 class="st-card__title">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+             style="color: var(--c-primary); vertical-align: -3px; margin-right: 6px;" aria-hidden="true">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+        Accounts
+      </h1>
+      <a href="{{ path('sales_tracker.accounts.add') }}" class="st-btn st-btn--primary st-btn--sm">+ Add account</a>
+    </header>
+
+    {# Search + type filter chips #}
+    <form method="GET" action="/sales/accounts" class="st-filter-bar" role="search">
+      <input type="search"
+             name="q"
+             value="{{ filters.q }}"
+             placeholder="Search by name, specialty…"
+             class="st-search-input"
+             aria-label="Search accounts" />
+      <div class="st-filter-chips">
+        {% set current_type = filters.type %}
+        <a href="/sales/accounts{% if filters.q %}?q={{ filters.q }}{% endif %}"
+           class="st-filter-chip {{ current_type == '' ? 'st-filter-chip--active' : '' }}">All</a>
+        <a href="/sales/accounts?type=doctor{% if filters.q %}&q={{ filters.q }}{% endif %}"
+           class="st-filter-chip {{ current_type == 'doctor' ? 'st-filter-chip--active' : '' }}">Doctors</a>
+        <a href="/sales/accounts?type=chemist{% if filters.q %}&q={{ filters.q }}{% endif %}"
+           class="st-filter-chip {{ current_type == 'chemist' ? 'st-filter-chip--active' : '' }}">Chemists</a>
+        <a href="/sales/accounts?type=stockist{% if filters.q %}&q={{ filters.q }}{% endif %}"
+           class="st-filter-chip {{ current_type == 'stockist' ? 'st-filter-chip--active' : '' }}">Stockists</a>
+      </div>
+      <button type="submit" class="st-btn st-btn--secondary st-btn--sm">Search</button>
+    </form>
+  </section>
+
+  {# Results table #}
+  <section class="st-card st-datatable" aria-labelledby="accountsTitle">
+    <header class="st-datatable__head">
+      <h2 id="accountsTitle" class="st-card__title">{{ accounts|length }} account{{ accounts|length == 1 ? '' : 's' }}</h2>
+      <span class="st-card__sub">Tap a row to view detail</span>
+    </header>
+
+    {% if accounts %}
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Specialty</th>
+            <th>District</th>
+            <th>Phone</th>
+            <th class="r">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in accounts %}
+            <tr class="st-account-row">
+              <td data-label="Name">
+                <a href="{{ path('sales_tracker.accounts.view', {id: a.id}) }}" class="st-cell-place__name">{{ a.name }}</a>
+                {% if a.address %}
+                  <div class="st-cell-place__sub">{{ a.address|slice(0, 40) }}{{ a.address|length > 40 ? '…' : '' }}</div>
+                {% endif %}
+              </td>
+              <td data-label="Type">
+                {% set ttone = a.type == 'doctor' ? 'doctor' : (a.type == 'chemist' ? 'chemist' : 'stockist') %}
+                <span class="st-account-type-tag st-account-type-tag--{{ ttone }}">
+                  {% if a.type == 'doctor' %}
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75"
+                         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M8 1a3 3 0 0 0-3 3v3a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                      <path d="M4 9v2a4 4 0 0 0 8 0V9"/>
+                    </svg>
+                  {% elseif a.type == 'chemist' %}
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75"
+                         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M3 2h10v4l-3 4 3 4v-2H3v2l3-4-3-4z"/>
+                    </svg>
+                  {% else %}
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75"
+                         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <rect x="2" y="5" width="12" height="9" rx="1"/>
+                      <path d="M2 8h12M6 5V3h4v2"/>
+                    </svg>
+                  {% endif %}
+                  {{ a.type|capitalize }}
+                </span>
+              </td>
+              <td data-label="Specialty">{{ a.specialty|default('—') }}</td>
+              <td data-label="District">{{ a.district_name|default(a.district_id ? '#' ~ a.district_id : '—') }}</td>
+              <td data-label="Phone">{{ a.phone|default('—') }}</td>
+              <td data-label="Action" class="r">
+                <a href="{{ path('sales_tracker.accounts.edit', {account_id: a.id}) }}" class="st-btn st-btn--ghost st-btn--sm">Edit</a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div class="st-empty">
+        <svg class="st-empty__art" viewBox="0 0 120 120" fill="none" stroke="currentColor" aria-hidden="true">
+          <rect x="22" y="30" width="76" height="60" rx="6" stroke-width="1.5"/>
+          <line x1="32" y1="48" x2="78" y2="48" stroke-width="1.5" opacity="0.4"/>
+          <line x1="32" y1="60" x2="68" y2="60" stroke-width="1.5" opacity="0.4"/>
+          <line x1="32" y1="72" x2="60" y2="72" stroke-width="1.5" opacity="0.4"/>
+        </svg>
+        <div class="st-empty__title">No accounts match</div>
+        <div class="st-empty__body">Try clearing the filter, or add a new account.</div>
+      </div>
+    {% endif %}
+  </section>
+
+  {# Sticky bottom nav for mobile (≤720px) — hidden via CSS above. #}
+  <nav class="st-bottom-nav" aria-label="Primary mobile">
+    <a href="{{ path('sales_tracker.dashboard') }}" class="st-bottom-nav__item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3 12L12 3l9 9"/><path d="M5 10v10h14V10"/>
+      </svg>
+      <span>Home</span>
+    </a>
+    <a href="{{ path('sales_tracker.plan') }}" class="st-bottom-nav__item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="4" y="5" width="16" height="16" rx="2"/><path d="M16 3v4M8 3v4M4 11h16"/>
+      </svg>
+      <span>Plan</span>
+    </a>
+    <a href="{{ path('sales_tracker.visit') }}" class="st-bottom-nav__item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 21s-7-7.5-7-12a7 7 0 1 1 14 0c0 4.5-7 12-7 12z"/>
+        <circle cx="12" cy="9" r="2.5"/>
+      </svg>
+      <span>Visit</span>
+    </a>
+    <a href="{{ path('sales_tracker.accounts') }}" class="st-bottom-nav__item st-bottom-nav__item--active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+      </svg>
+      <span>Accounts</span>
+    </a>
+    <a href="{{ path('sales_tracker.reports') }}" class="st-bottom-nav__item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/>
+      </svg>
+      <span>Reports</span>
+    </a>
+  </nav>
+
+</div>

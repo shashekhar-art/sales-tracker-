@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}Accounts &middot; Bishwa Medicare Pvt Ltd{% endblock %}
+{% block content %}
+  {% set active_menu = "accounts" %}
+  {% include "_menubar.html" %}
+
+<section class="card">
+  <header class="card__head">
+    <div>
+      <span class="eyebrow eyebrow--muted">Directory</span>
+      <h1 style="margin-top: 4px;">Accounts</h1>
+    </div>
+    <a class="btn btn--primary" href="{{ url_for('accounts_add') }}">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M8 3v10M3 8h10"/>
+      </svg>
+      Add account
+    </a>
+  </header>
+
+  <form method="get" class="filter-bar" action="{{ url_for('accounts_list') }}">
+    <input class="search-input" type="search" name="q" value="{{ active_q }}"
+           placeholder="Search by name, specialty, or address" aria-label="Search accounts">
+    <div class="filter-chip-group" role="group" aria-label="Filter by type">
+      <a class="filter-chip {% if not active_type %}filter-chip--active{% endif %}"
+         href="{{ url_for('accounts_list') }}">All</a>
+      {% for t in ['doctor','chemist','stockist'] %}
+        <a class="filter-chip {% if active_type == t %}filter-chip--active{% endif %}"
+           href="{{ url_for('accounts_list', type=t) }}">{{ t|capitalize }}</a>
+      {% endfor %}
+    </div>
+    <select name="district_id" aria-label="Filter by district" class="filter-select">
+      <option value="">All districts</option>
+      {% for d in districts %}
+        <option value="{{ d.id }}" {% if active_district|string == d.id|string %}selected{% endif %}>
+          {{ d.region_name }} &middot; {{ d.name }}
+        </option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn btn--secondary btn--sm">Apply</button>
+  </form>
+</section>
+
+<section class="card datatable" style="margin-top: 24px;" aria-labelledby="accountsTitle">
+  <header class="datatable__head">
+    <h2 id="accountsTitle" class="card__title">Results</h2>
+    <span class="card__sub">{{ rows|length }} account{{ '' if rows|length == 1 else 's' }}</span>
+  </header>
+  {% if rows %}
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Name</th>
+        <th>District</th>
+        <th>Address</th>
+        <th class="r">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for a in rows %}
+      <tr>
+        <td data-label="Type">
+          <span class="account-type-tag account-type-tag--{{ a.type }}">{{ a.type|capitalize }}</span>
+        </td>
+        <td data-label="Name">
+          <div class="cell-place__name">{{ a.name }}</div>
+          {% if a.specialty %}<div class="cell-place__sub">{{ a.specialty }}</div>{% endif %}
+        </td>
+        <td data-label="District">
+          {% if a.district_name %}
+            <div>{{ a.district_name }}</div>
+            <div class="cell-place__sub">{{ a.region_name or '' }}</div>
+          {% else %}
+            <span class="muted">&mdash;</span>
+          {% endif %}
+        </td>
+        <td data-label="Address">
+          <div class="cell-place__sub" style="font-family: var(--font-sans); color: var(--c-text);">
+            {{ a.address or '—' }}
+          </div>
+          {% if a.phone %}<div class="cell-place__sub">{{ a.phone }}</div>{% endif %}
+        </td>
+        <td data-label="Actions" class="r">
+          <a class="btn btn--ghost btn--sm" href="{{ url_for('accounts_edit', account_id=a.id) }}">Edit</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty">
+    <svg class="empty__art" viewBox="0 0 120 120" fill="none" stroke="currentColor" aria-hidden="true">
+      <rect class="em-fill-soft" x="22" y="28" width="64" height="76" rx="8" stroke="currentColor" stroke-width="1.5"/>
+      <line x1="32" y1="50" x2="76" y2="50" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
+      <line x1="32" y1="62" x2="68" y2="62" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
+      <line x1="32" y1="74" x2="62" y2="74" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
+    </svg>
+    <div class="empty__title">No accounts match</div>
+    <div class="empty__body">Try clearing filters or adding a new account.</div>
+    <a class="btn btn--primary" href="{{ url_for('accounts_add') }}">Add account</a>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

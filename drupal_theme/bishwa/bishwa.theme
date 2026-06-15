@@ -1,0 +1,27 @@
+<?php
+
+/**
+ * @file
+ * Bishwa Medicare theme hooks.
+ */
+
+/**
+ * Implements hook_preprocess_html().
+ * Add a body-class for branded styling.
+ */
+function bishwa_preprocess_html(&$variables) {
+  $variables['attributes']['class'][] = 'bishwa-theme';
+}
+
+/**
+ * Implements hook_preprocess_page().
+ * Expose current year and site info to page.html.twig.
+ */
+function bishwa_preprocess_page(&$variables) {
+  $variables['current_year'] = date('Y');
+  $config = \Drupal::config('system.site');
+  $variables['site_name']    = $config->get('name')   ?: 'Bishwa Medicare Pvt Ltd';
+  $variables['site_slogan']  = $config->get('slogan') ?: 'Sales operations';
+  $variables['is_logged_in'] = \Drupal::currentUser()->isAuthenticated();
+  $variables['current_user_name'] = \Drupal::currentUser()->getDisplayName();
+}

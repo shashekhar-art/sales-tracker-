@@ -1,0 +1,171 @@
+<div class="sales-tracker">
+{{ menubar }}
+
+  <section class="st-card st-card--focal">
+    <header class="st-card__head">
+      <h1 class="st-card__title">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+             style="color: var(--c-primary); vertical-align: -3px; margin-right: 6px;" aria-hidden="true">
+          <rect x="3" y="4" width="18" height="18" rx="2"/>
+          <path d="M16 2v4M8 2v4M3 10h18"/>
+        </svg>
+        Visit history
+      </h1>
+      <a href="{{ path('sales_tracker.visit') }}" class="st-btn st-btn--primary st-btn--sm">+ Log visit</a>
+    </header>
+
+    {# Filter bar — outcome chips + date range. Outcome chips preserve from/to
+       so switching outcome doesn't clear the active date filter. #}
+    {% set out = filters.outcome|default('') %}
+    {% set base = path('sales_tracker.visits.history') %}
+    {% set qs_extra = '' %}
+    {% if filters.from %}{% set qs_extra = qs_extra ~ '&from=' ~ filters.from %}{% endif %}
+    {% if filters.to %}{% set qs_extra = qs_extra ~ '&to=' ~ filters.to %}{% endif %}
+    <form method="GET" action="{{ base }}" class="st-filter-bar">
+      <div class="st-filter-chips">
+        <a href="{{ base }}{% if qs_extra %}?{{ qs_extra|trim('&') }}{% endif %}"
+           class="st-filter-chip {{ out == '' ? 'st-filter-chip--active' : '' }}">All</a>
+        <a href="{{ base }}?outcome=met{{ qs_extra }}"
+           class="st-filter-chip {{ out == 'met' ? 'st-filter-chip--active' : '' }}">Met</a>
+        <a href="{{ base }}?outcome=not_met{{ qs_extra }}"
+           class="st-filter-chip {{ out == 'not_met' ? 'st-filter-chip--active' : '' }}">Not met</a>
+        <a href="{{ base }}?outcome=rescheduled{{ qs_extra }}"
+           class="st-filter-chip {{ out == 'rescheduled' ? 'st-filter-chip--active' : '' }}">Rescheduled</a>
+      </div>
+      {# Outcome rides along on the form submit so Apply with from/to keeps the active chip. #}
+      {% if out %}<input type="hidden" name="outcome" value="{{ out }}" />{% endif %}
+      <input type="date" name="from" value="{{ filters.from }}" class="st-search-input" aria-label="From date" />
+      <input type="date" name="to" value="{{ filters.to }}" class="st-search-input" aria-label="To date" />
+      <button type="submit" class="st-btn st-btn--secondary st-btn--sm">Apply</button>
+    </form>
+  </section>
+
+  <section class="st-card st-datatable" aria-labelledby="vhTitle">
+    <header class="st-datatable__head">
+      <h2 id="vhTitle" class="st-card__title">{{ visits|length }} visit{{ visits|length == 1 ? '' : 's' }}</h2>
+      <span class="st-card__sub">Most recent first</span>
+    </header>
+    {% if visits %}
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Account</th>
+            <th>Outcome</th>
+            <th>Distance (km)</th>
+            <th>Source</th>
+            <th class="r">Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for v in visits %}
+            {% set otone = v.outcome == 'met' ? 'ok' : (v.outcome == 'rescheduled' ? 'mid' : 'bad') %}
+            <tr class="st-row--{{ otone }} st-visit-row">
+              <td data-label="Date">
+                <div class="st-cell-time__rel">{{ v.checkin_time|default('—') }}</div>
+              </td>
+              <td data-label="Account">
+                <div class="st-cell-place__name">
+                  {% if v.account_id %}
+                    <a href="{{ path('sales_tracker.accounts.view', {id: v.account_id}) }}">{{ v.account_name|default('Account #' ~ v.account_id) }}</a>
+                  {% else %}
+                    {{ v.account_name|default('—') }}
+                  {% endif %}
+                </div>
+                {% if v.account_type %}
+                  <div class="st-cell-place__sub">{{ v.account_type|capitalize }}</div>
+                {% endif %}
+              </td>
+              <td data-label="Outcome">
+                {% if v.outcome == 'met' %}
+                  <span class="st-badge st-badge--matched">
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75"
+                         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <circle cx="8" cy="8" r="7"/><path d="M5 8.5l2 2 4-4.5"/>
+                    </svg>
+                    Met
+                  </span>
+                {% elseif v.outcome == 'rescheduled' %}
+                  <span class="st-badge st-badge--manual">
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75"
+                         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <circle cx="8" cy="8" r="7"/><path d="M8 4v4l3 2"/>
+                    </svg>
+                    Rescheduled
+                  </span>
+                {% else %}
+                  <span class="st-badge st-badge--unmatched">
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75"
+                         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <circle cx="8" cy="8" r="7"/><path d="M5.5 5.5l5 5M10.5 5.5l-5 5"/>
+                    </svg>
+                    Not met
+                  </span>
+                {% endif %}
+              </td>
+              <td data-label="Distance">
+                {% if v.distance_km is not null %}
+                  <span class="st-num">{{ v.distance_km|number_format(2) }}<span class="st-unit">km</span></span>
+                {% else %}—{% endif %}
+              </td>
+              <td data-label="Source">
+                {% if v.source == 'gps' %}
+                  <span class="st-badge st-badge--gps">GPS</span>
+                {% else %}
+                  <span class="st-badge st-badge--manual">Manual</span>
+                {% endif %}
+              </td>
+              <td data-label="Notes" class="r">{{ v.visit_notes|default('—') }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div class="st-empty">
+        <svg class="st-empty__art" viewBox="0 0 120 120" fill="none" stroke="currentColor" aria-hidden="true">
+          <circle cx="60" cy="60" r="40" stroke-width="1.5" opacity="0.4"/>
+          <path d="M60 36v24l16 10" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <div class="st-empty__title">No visits in range</div>
+        <div class="st-empty__body">Try widening the date filter, or log your first visit.</div>
+      </div>
+    {% endif %}
+  </section>
+
+  {# Mobile bottom nav #}
+  <nav class="st-bottom-nav" aria-label="Primary mobile">
+    <a href="{{ path('sales_tracker.dashboard') }}" class="st-bottom-nav__item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3 12L12 3l9 9"/><path d="M5 10v10h14V10"/>
+      </svg><span>Home</span>
+    </a>
+    <a href="{{ path('sales_tracker.plan') }}" class="st-bottom-nav__item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="4" y="5" width="16" height="16" rx="2"/><path d="M16 3v4M8 3v4M4 11h16"/>
+      </svg><span>Plan</span>
+    </a>
+    <a href="{{ path('sales_tracker.visit') }}" class="st-bottom-nav__item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 21s-7-7.5-7-12a7 7 0 1 1 14 0c0 4.5-7 12-7 12z"/>
+        <circle cx="12" cy="9" r="2.5"/>
+      </svg><span>Visit</span>
+    </a>
+    <a href="{{ path('sales_tracker.visits.history') }}" class="st-bottom-nav__item st-bottom-nav__item--active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
+      </svg><span>History</span>
+    </a>
+    <a href="{{ path('sales_tracker.reports') }}" class="st-bottom-nav__item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/>
+      </svg><span>Reports</span>
+    </a>
+  </nav>
+
+</div>

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}{{ employee.name }} &middot; Proctor &middot; Bishwa Medicare Pvt Ltd{% endblock %}
+{% block content %}
+  {% set active_menu = "proctor" %}
+  {% include "_menubar.html" %}
+
+<section class="card card--focal">
+  <span class="eyebrow eyebrow--muted">
+    <a href="{{ url_for('proctor_index') }}">India</a>
+    {% if employee.region_id %}
+      &rsaquo; <a href="{{ url_for('proctor_region', rid=employee.region_id) }}">{{ employee.region_name }}</a>
+    {% endif %}
+    {% if employee.district_id %}
+      &rsaquo; <a href="{{ url_for('proctor_district', did=employee.district_id) }}">{{ employee.district_name }}</a>
+    {% endif %}
+  </span>
+  <h1>{{ employee.name }}</h1>
+  <p class="muted">
+    {{ employee.email }}
+    {% if employee.phone %}&middot; {{ employee.phone }}{% endif %}
+    {% if employee.territory %}&middot; Territory: {{ employee.territory }}{% endif %}
+    {% if employee.manager_name %}&middot; Manager: {{ employee.manager_name }}{% endif %}
+  </p>
+</section>
+
+<div class="kpis" style="margin-top: 24px;">
+  {% for p in ['day','week','month','quarter'] %}
+    {% set ps = stats[p] %}
+    <div class="card kpi stat-tile">
+      <div class="kpi__label">{{ {'day':'Today','week':'This week','month':'This month','quarter':'This quarter'}[p] }}</div>
+      <div class="kpi__value num">{{ ps.counts.total }}</div>
+      <div class="kpi__sub">
+        D {{ ps.counts.doctor }} &middot; C {{ ps.counts.chemist }} &middot; S {{ ps.counts.stockist }}
+        {% if ps.achievement_pct is not none %}
+          &middot; {{ '%.0f'|format(ps.achievement_pct) }}% of target
+        {% endif %}
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

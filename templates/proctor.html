@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Proctor &middot; India &middot; Bishwa Medicare Pvt Ltd{% endblock %}
+{% block content %}
+  {% set active_menu = "proctor" %}
+  {% include "_menubar.html" %}
+
+<section class="card card--focal">
+  <span class="eyebrow eyebrow--muted">National view</span>
+  <h1>India proctor dashboard</h1>
+  <p class="muted">Visits rolled up by state &middot; click any state to drill into its districts.</p>
+
+  {% set tot_day      = rows|sum(attribute='visits_day') %}
+  {% set tot_week     = rows|sum(attribute='visits_week') %}
+  {% set tot_month    = rows|sum(attribute='visits_month') %}
+  {% set tot_quarter  = rows|sum(attribute='visits_quarter') %}
+  {% set tot_emp      = rows|sum(attribute='employee_count') %}
+
+  <div class="kpis" style="margin-top: 24px;">
+    <div class="card kpi stat-tile">
+      <div class="kpi__label">Today</div>
+      <div class="kpi__value num">{{ tot_day }}</div>
+      <div class="kpi__sub">visits across India</div>
+    </div>
+    <div class="card kpi stat-tile">
+      <div class="kpi__label">This week</div>
+      <div class="kpi__value num">{{ tot_week }}</div>
+    </div>
+    <div class="card kpi stat-tile">
+      <div class="kpi__label">This month</div>
+      <div class="kpi__value num">{{ tot_month }}</div>
+    </div>
+    <div class="card kpi stat-tile">
+      <div class="kpi__label">This quarter</div>
+      <div class="kpi__value num">{{ tot_quarter }}</div>
+      <div class="kpi__sub">{{ tot_emp }} reps</div>
+    </div>
+  </div>
+</section>
+
+<section class="card" style="margin-top: 24px;" aria-labelledby="statesTitle">
+  <header class="card__head">
+    <h2 id="statesTitle" class="card__title">States &amp; UTs</h2>
+    <span class="card__sub">{{ rows|length }} regions</span>
+  </header>
+
+  {% if rows %}
+  <div class="territory-grid">
+    {% for r in rows %}
+      <a class="territory-card drill-link" href="{{ url_for('proctor_region', rid=r.id) }}">
+        <div class="territory-card__heading">
+          <span class="territory-card__name">{{ r.name }}</span>
+          <span class="territory-card__code muted">{{ r.code }} &middot; {{ r.type|upper }}</span>
+        </div>
+        <ul class="territory-card__nums">
+          <li><span class="muted">Today</span><span class="num">{{ r.visits_day }}</span></li>
+          <li><span class="muted">Week</span><span class="num">{{ r.visits_week }}</span></li>
+          <li><span class="muted">Month</span><span class="num">{{ r.visits_month }}</span></li>
+          <li><span class="muted">Quarter</span><span class="num">{{ r.visits_quarter }}</span></li>
+        </ul>
+        <div class="territory-card__foot">
+          <span class="muted">{{ r.employee_count }} rep{{ '' if r.employee_count == 1 else 's' }}</span>
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M5 2l6 6-6 6"/>
+          </svg>
+        </div>
+      </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty">
+    <div class="empty__title">No regions configured</div>
+    <div class="empty__body">Seed the regions table to start tracking by territory.</div>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

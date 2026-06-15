@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block title %}History &middot; Bishwa Medicare Pvt Ltd{% endblock %}
+{% block content %}
+  {% set active_menu = "history" %}
+  {% include "_menubar.html" %}
+
+<div style="margin-bottom: 24px;">
+  <span class="eyebrow eyebrow--muted">My activity</span>
+  <h1 style="margin-top: 4px;">Check-in history</h1>
+  <p class="muted" style="margin-top: 6px;">Every check-in you've logged, scored against the plan for that day.</p>
+</div>
+
+{% if rows %}
+<section class="card datatable" aria-labelledby="historyTitle">
+  <header class="datatable__head">
+    <h2 id="historyTitle" class="card__title">All check-ins</h2>
+    <span class="card__sub">{{ rows|length }} total</span>
+  </header>
+  <table>
+    <thead>
+      <tr>
+        <th>Status</th>
+        <th>Plan date</th>
+        <th>Planned</th>
+        <th>Actual</th>
+        <th>Distance (km)</th>
+        <th class="r">Match</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+        {% set raw = r.match_score if r.match_score is not none else 0 %}
+        {% set pct = (raw * 100 + 0.5) | int %}
+        {% if pct >= 80 %}{% set tone = 'high' %}{% set row_tone = 'ok'  %}
+        {% elif pct >= 50 %}{% set tone = 'mid'  %}{% set row_tone = 'mid' %}
+        {% else %}            {% set tone = 'low'  %}{% set row_tone = 'bad' %}{% endif %}
+        {% set score = pct / 100.0 %}
+        {% set value_dash = 197.92 * score %}
+        {% set matched_ui = (r.match_score is not none) and (pct >= 80) %}
+
+        {% set d = r.distance_km if r.distance_km is not none else 0 %}
+        {% set fill_pct = (10 - d) * 10 if d < 10 else 0 %}
+        {% if d <= 0.5 %}{% set dcolor = '#10B981' %}{% set dqual = 'near' %}{% set dqualtxt = 'Near' %}
+        {% elif d <= 2 %}{% set dcolor = '#F59E0B' %}{% set dqual = 'mid'  %}{% set dqualtxt = 'Mid' %}
+        {% else %}         {% set dcolor = '#EF4444' %}{% set dqual = 'far'  %}{% set dqualtxt = 'Far' %}{% endif %}
+
+      <tr class="row--{{ row_tone if r.match_score is not none else 'neutral' }}">
+        <td data-label="Status">
+          {% if r.match_score is not none %}
+          <span class="score-cell" aria-label="Match score {{ pct }} percent">
+            <svg class="gauge gauge--{{ tone }}" width="36" height="36" viewBox="-4 -4 108 108" aria-hidden="true" focusable="false">
+              <circle class="gauge__track" cx="50" cy="50" r="42" fill="none" stroke-width="10"
+                      stroke-linecap="round" stroke-dasharray="197.92 263.89" transform="rotate(135 50 50)"/>
+              <circle class="gauge__value" cx="50" cy="50" r="42" fill="none" stroke-width="10"
+                      stroke-linecap="round"
+                      stroke-dasharray="{{ '%.2f'|format(value_dash) }} 263.89" transform="rotate(135 50 50)"/>
+            </svg>
+            <span class="num score-cell__num">{{ pct }}<span class="unit">%</span></span>
+            <span class="score-cell__tag score-cell__tag--{{ tone }}" aria-hidden="true">
+              {% if tone == 'high' %}High{% elif tone == 'mid' %}Mid{% else %}Low{% endif %}
+            </span>
+          </span>
+          {% else %}
+          <span class="muted">&mdash;</span>
+          {% endif %}
+        </td>
+        <td data-label="Plan date">
+          <div class="cell-time__rel">{{ r.plan_date }}</div>
+          <div class="cell-time__abs">{{ r.checkin_time.strftime('%H:%M') }}</div>
+        </td>
+        <td data-label="Planned">
+          <div class="cell-place__name">{{ r.planned_place_name or '—' }}</div>
+        </td>
+        <td data-label="Actual">
+          <div class="cell-place__name">{{ r.actual_place_name or '—' }}</div>
+          {% if r.text_similarity is not none %}
+          <div class="cell-place__sub">text sim {{ "%.2f"|format(r.text_similarity) }}</div>
+          {% endif %}
+        </td>
+        <td data-label="Distance">
+          {% if r.distance_km is not none %}
+          <span class="prox" title="Fuller bar means closer to planned location">
+            <svg class="prox__bar" width="120" height="10" viewBox="0 0 120 10"
+                 role="img" aria-label="{{ '%.2f'|format(d) }} kilometres from planned location — {{ dqualtxt }}">
+              <rect class="prox__bar-track" x="0" y="2" width="120" height="6" rx="3"/>
+              <rect x="0" y="2" width="{{ '%.2f'|format(fill_pct * 1.2) }}" height="6" rx="3" fill="{{ dcolor }}"/>
+            </svg>
+            <span class="num"><span class="prox__num">{{ "%.2f"|format(d) }}</span><span class="unit">km</span></span>
+            <span class="prox__qual prox__qual--{{ dqual }}">{{ dqualtxt }}</span>
+          </span>
+          {% else %}
+          <span class="muted">&mdash;</span>
+          {% endif %}
+        </td>
+        <td data-label="Match" class="r">
+          {% if r.match_score is none %}
+            <span class="badge badge--neutral">Pending</span>
+          {% elif matched_ui %}
+            <span class="badge badge--matched">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="8" cy="8" r="7"/><path d="M5 8.5l2 2 4-4.5"/>
+              </svg>
+              Matched
+            </span>
+          {% else %}
+            <span class="badge badge--unmatched">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="8" cy="8" r="7"/><path d="M5.5 5.5l5 5M10.5 5.5l-5 5"/>
+              </svg>
+              Not matched
+            </span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% else %}
+<section class="card">
+  <div class="empty">
+    <svg class="empty__art" viewBox="0 0 120 120" fill="none" stroke="currentColor" aria-hidden="true">
+      <rect class="em-fill-soft" x="24" y="32" width="72" height="64" rx="6" stroke-width="1.5"/>
+      <line x1="24" y1="48" x2="96" y2="48" stroke-width="1.5"/>
+      <line x1="44" y1="24" x2="44" y2="40" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="76" y1="24" x2="76" y2="40" stroke-width="1.5" stroke-linecap="round"/>
+      <circle cx="80" cy="78" r="9" fill="none" stroke-width="1.5"/>
+      <line x1="86" y1="84" x2="92" y2="90" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+    <div class="empty__title">No check-ins recorded yet</div>
+    <div class="empty__body">Once you start logging check-ins, they'll show up here.</div>
+    <a class="btn btn--primary" href="{{ url_for('dashboard') }}">Go to dashboard</a>
+  </div>
+</section>
+{% endif %}
+
+{% endblock %}

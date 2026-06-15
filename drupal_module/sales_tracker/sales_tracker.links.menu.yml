@@ -1,0 +1,50 @@
+sales_tracker.menu:
+  title: 'Sales Tracker'
+  route_name: sales_tracker.dashboard
+  menu_name: main
+  weight: 10
+sales_tracker.menu.dashboard:
+  parent: sales_tracker.menu
+  title: Dashboard
+  url: internal:/sales/dashboard
+  weight: 0
+sales_tracker.menu.plan:
+  parent: sales_tracker.menu
+  title: Plan
+  url: internal:/sales/plan
+  weight: 1
+sales_tracker.menu.visit:
+  parent: sales_tracker.menu
+  title: Visit
+  url: internal:/sales/visit
+  weight: 2
+sales_tracker.menu.history:
+  parent: sales_tracker.menu
+  title: History
+  url: internal:/sales/history
+  weight: 3
+sales_tracker.menu.visits_history:
+  parent: sales_tracker.menu
+  title: Visits
+  url: internal:/sales/visits/history
+  weight: 4
+sales_tracker.menu.reports:
+  parent: sales_tracker.menu
+  title: Reports
+  url: internal:/sales/reports
+  weight: 5
+sales_tracker.menu.accounts:
+  parent: sales_tracker.menu
+  title: Accounts
+  url: internal:/sales/accounts
+  weight: 6
+sales_tracker.menu.proctor:
+  parent: sales_tracker.menu
+  title: Proctor
+  url: internal:/sales/proctor
+  weight: 7
+sales_tracker.menu.admin:
+  parent: sales_tracker.menu
+  title: Admin
+  url: internal:/sales/admin
+  weight: 8

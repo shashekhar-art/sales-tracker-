@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}{{ region.name }} &middot; Proctor &middot; Bishwa Medicare Pvt Ltd{% endblock %}
+{% block content %}
+  {% set active_menu = "proctor" %}
+  {% include "_menubar.html" %}
+
+<section class="card card--focal">
+  <span class="eyebrow eyebrow--muted">
+    <a href="{{ url_for('proctor_index') }}">India</a> &rsaquo; {{ region.name }}
+  </span>
+  <h1>{{ region.name }}</h1>
+  <p class="muted">{{ region.code }} &middot; {{ region.type|upper }} &middot; District rollup.</p>
+</section>
+
+<section class="card datatable" style="margin-top: 24px;" aria-labelledby="districtsTitle">
+  <header class="datatable__head">
+    <h2 id="districtsTitle" class="card__title">Districts</h2>
+    <span class="card__sub">{{ rows|length }} district{{ '' if rows|length == 1 else 's' }}</span>
+  </header>
+  {% if rows %}
+  <table>
+    <thead>
+      <tr>
+        <th>District</th>
+        <th class="r">Today</th>
+        <th class="r">Week</th>
+        <th class="r">Month</th>
+        <th class="r">Quarter</th>
+        <th class="r">Reps</th>
+        <th class="r"></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for d in rows %}
+      <tr>
+        <td data-label="District">
+          <div class="cell-place__name">{{ d.name }}</div>
+          {% if d.code %}<div class="cell-place__sub">{{ d.code }}</div>{% endif %}
+        </td>
+        <td data-label="Today" class="r num">{{ d.visits_day }}</td>
+        <td data-label="Week" class="r num">{{ d.visits_week }}</td>
+        <td data-label="Month" class="r num">{{ d.visits_month }}</td>
+        <td data-label="Quarter" class="r num">{{ d.visits_quarter }}</td>
+        <td data-label="Reps" class="r num">{{ d.employee_count }}</td>
+        <td data-label="" class="r">
+          <a class="btn btn--ghost btn--sm drill-link" href="{{ url_for('proctor_district', did=d.id) }}">Open</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty"><div class="empty__title">No districts in this region</div></div>
+  {% endif %}
+</section>
+{% endblock %}

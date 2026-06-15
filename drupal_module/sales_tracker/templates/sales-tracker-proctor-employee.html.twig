@@ -1,0 +1,134 @@
+<div class="sales-tracker">
+{{ menubar }}
+
+  <section class="st-card st-card--focal">
+    <header class="st-card__head">
+      <div>
+        <span class="st-eyebrow st-eyebrow--muted">Proctor &middot; Employee detail</span>
+        <h1 class="st-card__title">{{ employee.name|default('Employee') }}</h1>
+        <div class="st-hero__meta">
+          <span class="st-chip">{{ employee.email|default('—') }}</span>
+          {% if employee.phone %}<span class="st-chip">{{ employee.phone }}</span>{% endif %}
+          {% if employee.territory %}<span class="st-chip">{{ employee.territory }}</span>{% endif %}
+          {% if employee.district_name %}<span class="st-chip">{{ employee.district_name }}</span>{% endif %}
+        </div>
+      </div>
+    </header>
+
+    <div class="st-period-summary">
+      <div class="st-card st-stat-tile">
+        <span class="st-stat-tile__num st-num">{{ stats.today|default(0) }}</span>
+        <span class="st-stat-tile__label">Today</span>
+      </div>
+      <div class="st-card st-stat-tile">
+        <span class="st-stat-tile__num st-num">{{ stats.week|default(0) }}</span>
+        <span class="st-stat-tile__label">Week</span>
+      </div>
+      <div class="st-card st-stat-tile">
+        <span class="st-stat-tile__num st-num">{{ stats.month|default(0) }}</span>
+        <span class="st-stat-tile__label">Month</span>
+      </div>
+      <div class="st-card st-stat-tile">
+        <span class="st-stat-tile__num st-num">{{ stats.quarter|default(0) }}</span>
+        <span class="st-stat-tile__label">Quarter</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="st-dashboard-grid">
+    <section class="st-card st-datatable" aria-labelledby="recentTitle">
+      <header class="st-datatable__head">
+        <h2 id="recentTitle" class="st-card__title">Recent visits</h2>
+        <span class="st-card__sub">{{ recent|length }} rows</span>
+      </header>
+      {% if recent %}
+        <table>
+          <thead>
+            <tr><th>When</th><th>Account</th><th>Outcome</th><th>Distance</th></tr>
+          </thead>
+          <tbody>
+            {% for v in recent %}
+              {% set otone = v.outcome == 'met' ? 'ok' : (v.outcome == 'rescheduled' ? 'mid' : 'bad') %}
+              <tr class="st-row--{{ otone }} st-visit-row">
+                <td data-label="When">{{ v.checkin_time|default('—') }}</td>
+                <td data-label="Account">{{ v.account_name|default('—') }}</td>
+                <td data-label="Outcome">{{ v.outcome|default('—')|replace({'_': ' '})|capitalize }}</td>
+                <td data-label="Distance">
+                  {% if v.distance_km is not null %}
+                    <span class="st-num">{{ v.distance_km|number_format(2) }}<span class="st-unit">km</span></span>
+                  {% else %}—{% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div class="st-empty"><div class="st-empty__body">No recent visits.</div></div>
+      {% endif %}
+    </section>
+
+    <section class="st-card" aria-labelledby="flagsTitle">
+      <header class="st-card__head">
+        <h2 id="flagsTitle" class="st-card__title">Anomaly flags</h2>
+        <span class="st-card__sub">{{ flags|length }} open</span>
+      </header>
+      {% if flags %}
+        <div class="st-anomaly-list">
+          {% for f in flags %}
+            <div class="st-anomaly-row" role="group" aria-label="Anomaly: {{ f.reason }}">
+              <span class="st-anomaly-row__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 3 L22 20 H2 Z"/><path d="M12 10v4"/><circle cx="12" cy="17" r="0.8" fill="currentColor"/>
+                </svg>
+              </span>
+              <div>
+                <div class="st-anomaly-row__reason">{{ f.actual_place_name|default('—') }}</div>
+                <div class="st-anomaly-row__meta">{{ f.reason }}</div>
+              </div>
+              <div class="st-anomaly-row__score">{{ f.score|number_format(2) }}</div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="st-empty" style="color: var(--c-success);">
+          <div class="st-empty__title">All clear</div>
+          <div class="st-empty__body">No anomaly flags on this employee.</div>
+        </div>
+      {% endif %}
+    </section>
+  </div>
+
+  <nav class="st-bottom-nav" aria-label="Primary mobile">
+    <a href="{{ path('sales_tracker.dashboard') }}" class="st-bottom-nav__item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3 12L12 3l9 9"/><path d="M5 10v10h14V10"/>
+      </svg><span>Home</span>
+    </a>
+    <a href="{{ path('sales_tracker.proctor') }}" class="st-bottom-nav__item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="10"/><path d="M2 12h20"/>
+      </svg><span>India</span>
+    </a>
+    <a href="#" class="st-bottom-nav__item st-bottom-nav__item--active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="8" r="4"/><path d="M4 21v-2a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v2"/>
+      </svg><span>Employee</span>
+    </a>
+    <a href="{{ path('sales_tracker.reports') }}" class="st-bottom-nav__item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/>
+      </svg><span>Reports</span>
+    </a>
+    <a href="{{ path('sales_tracker.admin') }}" class="st-bottom-nav__item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+      </svg><span>Admin</span>
+    </a>
+  </nav>
+</div>

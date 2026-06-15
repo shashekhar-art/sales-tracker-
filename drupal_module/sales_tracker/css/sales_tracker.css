@@ -1,0 +1,1820 @@
+/* =========================================================================
+ * sales_tracker — Component styles
+ *
+ * Everything is scoped under .sales-tracker so we don't fight Drupal's admin
+ * theme. Tokens live in _tokens.css (loaded first via libraries.yml).
+ *
+ * Class-name contract for the Twig templates (must match verbatim):
+ *   Layout       : .st-page, .st-stack, .st-row, .st-row--between, .st-grid-2
+ *                  .st-dashboard-grid, .st-section
+ *   App strip    : .st-appbar, .st-appbar__inner, .st-brand, .st-brand__mark,
+ *                  .st-nav, .st-appbar__right, .st-userpill, .st-userpill__avatar
+ *   Flash        : .st-flash, .st-flash--success, .st-flash--warning,
+ *                  .st-flash--error, .st-flash--danger, .st-flash--info
+ *   Card         : .st-card, .st-card--focal, .st-card--clickable,
+ *                  .st-card__head, .st-card__title, .st-card__sub
+ *   Hero         : .st-hero, .st-hero__plan, .st-hero__meta,
+ *                  .st-hero__gauge, .st-hero__gauge-label, .st-hero__gauge-time
+ *   Chips        : .st-chip, .st-chip--coord
+ *   Eyebrows     : .st-eyebrow, .st-eyebrow--muted
+ *   KPI strip    : .st-kpis, .st-kpi, .st-kpi__label, .st-kpi__value,
+ *                  .st-kpi__sub, .st-kpi__icon,
+ *                  .st-kpi__value--success / --warning / --danger
+ *   Gauge        : .st-gauge, .st-gauge__track, .st-gauge__value,
+ *                  .st-gauge__num, .st-gauge__pct, .st-gauge__lbl,
+ *                  .st-gauge--high / --mid / --low
+ *   Score cell   : .st-score-cell, .st-score-cell__num,
+ *                  .st-score-cell__tag, --high / --mid / --low
+ *   Proximity    : .st-prox, .st-prox__bar, .st-prox__bar-track,
+ *                  .st-prox__num, .st-prox__qual,
+ *                  .st-prox__qual--near / --mid / --far
+ *   Badge        : .st-badge, .st-badge--matched, .st-badge--unmatched,
+ *                  .st-badge--anomaly, .st-badge--gps, .st-badge--manual
+ *   Table        : .st-datatable, .st-datatable__head, .st-datatable__filters
+ *                  rows: .st-row--ok, .st-row--mid, .st-row--bad
+ *                  cells: .st-cell-place__name, .st-cell-place__sub,
+ *                  .st-cell-time__rel, .st-cell-time__abs
+ *   Anomalies    : .st-anomaly-list, .st-anomaly-row, .st-anomaly-row__icon,
+ *                  .st-anomaly-row__reason, .st-anomaly-row__meta,
+ *                  .st-anomaly-row__score, .st-anomaly-row__score-label
+ *   Empty        : .st-empty, .st-empty__art, .st-empty__title, .st-empty__body
+ *   Button       : .st-btn, .st-btn--primary / --secondary / --ghost / --danger,
+ *                  .st-btn--sm / --lg / --block
+ *                  (legacy .button is also styled inside .sales-tracker)
+ *   Form         : .st-form-card, .st-field, .st-field-label, .st-field__help,
+ *                  .st-field--mono, .st-field--invalid, .st-field__error,
+ *                  .st-segmented, .st-form-card__footer, .st-req, .st-req-text
+ *   Utilities    : .st-num, .st-mono, .st-muted, .st-subtle, .st-sr-only,
+ *                  .st-unit
+ * ========================================================================= */
+
+
+/* -------------------------------------------------------------------------
+ * 0. Scope reset + base typography
+ * ------------------------------------------------------------------------- */
+
+.sales-tracker,
+.sales-tracker *,
+.sales-tracker *::before,
+.sales-tracker *::after {
+  box-sizing: border-box;
+}
+
+.sales-tracker {
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+.sales-tracker h1,
+.sales-tracker h2,
+.sales-tracker h3,
+.sales-tracker h4 {
+  margin: 0;
+  color: var(--c-text);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.sales-tracker h1 { font-size: var(--fs-h1); line-height: var(--lh-h1); font-weight: 700; letter-spacing: -0.02em; }
+.sales-tracker h2 { font-size: var(--fs-h2); line-height: var(--lh-h2); }
+.sales-tracker h3 { font-size: var(--fs-h3); line-height: var(--lh-h3); }
+.sales-tracker p  { margin: 0; }
+
+.sales-tracker a {
+  color: var(--c-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+  transition: color var(--t-fast) var(--ease-out);
+}
+.sales-tracker a:hover { color: var(--c-primary-dark); text-decoration-thickness: 2px; }
+.sales-tracker a:focus-visible {
+  outline: 2px solid var(--c-primary);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* -------------------------------------------------------------------------
+ * 1. Utilities
+ * ------------------------------------------------------------------------- */
+
+.sales-tracker .st-num,
+.sales-tracker .st-num * {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1, "cv11" 1;
+}
+.sales-tracker .st-mono   { font-family: var(--font-mono); }
+.sales-tracker .st-muted  { color: var(--c-text-muted); }
+.sales-tracker .st-subtle { color: var(--c-text-muted); }
+.sales-tracker .st-sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+.sales-tracker .st-eyebrow {
+  font-size: var(--fs-eyebrow);
+  line-height: var(--lh-eyebrow);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--ls-eyebrow);
+  color: var(--c-text);
+}
+.sales-tracker .st-eyebrow--muted { color: var(--c-text-muted); }
+
+.sales-tracker .st-unit {
+  font-size: 0.65em;
+  color: var(--c-text-muted);
+  font-weight: 500;
+  margin-left: 2px;
+}
+
+/* -------------------------------------------------------------------------
+ * 2. Layout
+ * ------------------------------------------------------------------------- */
+
+.sales-tracker .st-page {
+  max-width: var(--maxw-page);
+  margin: 0 auto;
+  padding: var(--sp-8) var(--sp-6);
+}
+
+.sales-tracker .st-section + .st-section { margin-top: var(--sp-8); }
+.sales-tracker .st-stack > * + * { margin-top: var(--sp-4); }
+
+.sales-tracker .st-row {
+  display: flex;
+  gap: var(--sp-4);
+  align-items: center;
+}
+.sales-tracker .st-row--between { justify-content: space-between; }
+
+.sales-tracker .st-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-4);
+}
+@media (max-width: 720px) {
+  .sales-tracker .st-grid-2 { grid-template-columns: 1fr; }
+}
+
+.sales-tracker .st-dashboard-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--sp-6);
+  margin-top: var(--sp-6);
+}
+@media (max-width: 900px) {
+  .sales-tracker .st-dashboard-grid { grid-template-columns: 1fr; }
+}
+
+/* -------------------------------------------------------------------------
+ * 3. App header strip (inside .sales-tracker, not the Drupal toolbar)
+ * ------------------------------------------------------------------------- */
+
+.sales-tracker .st-appbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  height: var(--nav-h);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: saturate(140%) blur(12px);
+  -webkit-backdrop-filter: saturate(140%) blur(12px);
+  border-bottom: 1px solid var(--c-border);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .sales-tracker .st-appbar { background: #FFFFFF; }
+}
+
+.sales-tracker .st-appbar__inner {
+  max-width: var(--maxw-page);
+  height: 100%;
+  margin: 0 auto;
+  padding: 0 var(--sp-6);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-6);
+}
+
+.sales-tracker .st-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--c-text);
+  text-decoration: none;
+}
+.sales-tracker .st-brand:hover { text-decoration: none; color: var(--c-text); }
+.sales-tracker .st-brand__mark { width: 24px; height: 24px; flex: 0 0 24px; }
+
+.sales-tracker .st-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  margin-left: var(--sp-4);
+}
+.sales-tracker .st-nav a {
+  position: relative;
+  padding: 8px 12px;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--c-text);
+  border-radius: var(--r-md);
+  text-decoration: none;
+}
+.sales-tracker .st-nav a:hover { background: var(--c-surface-alt); text-decoration: none; }
+.sales-tracker .st-nav a.is-active { color: var(--c-text); font-weight: 600; }
+.sales-tracker .st-nav a.is-active::after {
+  content: "";
+  position: absolute;
+  left: 12px; right: 12px; bottom: -10px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--c-primary);
+}
+
+.sales-tracker .st-appbar__right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.sales-tracker .st-userpill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 4px 10px 4px 4px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-pill);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+}
+.sales-tracker .st-userpill__avatar {
+  width: 28px; height: 28px;
+  border-radius: var(--r-pill);
+  background: linear-gradient(135deg, var(--c-primary), var(--c-accent));
+  color: #fff;
+  font-weight: 700;
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* -------------------------------------------------------------------------
+ * 4. Flash messages — toast banner aesthetic
+ *    Also styles Drupal's native .messages--* containers when emitted inside
+ *    .sales-tracker, so admin status/error messages get the same look.
+ * ------------------------------------------------------------------------- */
+
+.sales-tracker .st-flash,
+.sales-tracker .messages {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: 12px 16px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  background: var(--c-surface);
+  font-size: var(--fs-sm);
+  margin-bottom: var(--sp-4);
+  box-shadow: var(--sh-1);
+}
+.sales-tracker .st-flash svg,
+.sales-tracker .messages svg {
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+}
+
+.sales-tracker .st-flash--success,
+.sales-tracker .messages--status,
+.sales-tracker .messages.status {
+  background: var(--c-success-bg);
+  border-color: var(--c-success-border);
+  color: var(--c-success-fg);
+}
+.sales-tracker .st-flash--warning,
+.sales-tracker .messages--warning,
+.sales-tracker .messages.warning {
+  background: var(--c-warning-bg);
+  border-color: var(--c-warning-border);
+  color: var(--c-warning-fg);
+}
+.sales-tracker .st-flash--error,
+.sales-tracker .st-flash--danger,
+.sales-tracker .messages--error,
+.sales-tracker .messages.error {
+  background: var(--c-danger-bg);
+  border-color: var(--c-danger-border);
+  color: var(--c-danger-fg);
+}
+.sales-tracker .st-flash--info,
+.sales-tracker .messages--info,
+.sales-tracker .messages.info {
+  background: var(--c-primary-50);
+  border-color: var(--c-primary-100);
+  color: var(--c-primary-dark);
+}
+
+/* -------------------------------------------------------------------------
+ * 5. Cards (universal surface)
+ * ------------------------------------------------------------------------- */
+
+.sales-tracker .st-card,
+.sales-tracker .card {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  padding: var(--sp-6);
+  box-shadow: var(--sh-1);
+}
+.sales-tracker .st-card + .st-card,
+.sales-tracker .card + .card { margin-top: var(--sp-6); }
+
+.sales-tracker .st-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-4);
+}
+.sales-tracker .st-card__title { font-size: var(--fs-h2); font-weight: 600; }
+.sales-tracker .st-card__sub   { color: var(--c-text-muted); font-size: var(--fs-sm); }
+
+.sales-tracker .st-card--focal {
+  position: relative;
+  padding-top: calc(var(--sp-6) + 4px);
+  overflow: hidden;
+}
+.sales-tracker .st-card--focal::before {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; top: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--c-primary) 0%, var(--c-accent) 100%);
+}
+
+.sales-tracker .st-card--clickable {
+  transition: transform var(--t-base) var(--ease-out),
+              box-shadow var(--t-base) var(--ease-out);
+}
+.sales-tracker .st-card--clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--sh-2);
+}
+
+/* -------------------------------------------------------------------------
+ * 6. Hero — today's plan
+ * ------------------------------------------------------------------------- */
+
+.sales-tracker .st-hero {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: var(--sp-6);
+  align-items: start;
+}
+@media (max-width: 720px) {
+  .sales-tracker .st-hero { grid-template-columns: 1fr; }
+}
+
+.sales-tracker .st-hero__plan h1 {
+  font-size: var(--fs-display);
+  line-height: var(--lh-display);
+  letter-spacing: -0.02em;
+  margin-top: var(--sp-2);
+}
+
+.sales-tracker .st-hero__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+
+.sales-tracker .st-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 12px;
+  background: var(--c-surface-alt);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-pill);
+  font-size: var(--fs-xs);
+  color: var(--c-text);
+}
+.sales-tracker .st-chip svg { width: 14px; height: 14px; color: var(--c-text-muted); }
+.sales-tracker .st-chip--coord {
+  font-family: var(--font-mono);
+  color: var(--c-text-muted);
+}
+
+.sales-tracker .st-hero__gauge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-5);
+  background: var(--c-primary-50);
+  border: 1px solid var(--c-primary-100);
+  border-radius: var(--r-lg);
+}
+.sales-tracker .st-hero__gauge-label {
+  font-size: var(--fs-eyebrow);
+  color: var(--c-text);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--ls-eyebrow);
+}
+.sales-tracker .st-hero__gauge-time {
+  font-size: var(--fs-xs);
+  color: var(--c-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* -------------------------------------------------------------------------
+ * 7. KPI strip (4-up)
+ * ------------------------------------------------------------------------- */
+
+.sales-tracker .st-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--sp-4);
+  margin-top: var(--sp-6);
+}
+@media (max-width: 900px) {
+  .sales-tracker .st-kpis { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 480px) {
+  .sales-tracker .st-kpis { grid-template-columns: 1fr; }
+}
+
+.sales-tracker .st-kpi { padding: var(--sp-5); }
+.sales-tracker .st-kpi__label {
+  font-size: var(--fs-eyebrow);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--ls-eyebrow);
+  color: var(--c-text-muted);
+}
+.sales-tracker .st-kpi__value {
+  margin-top: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-kpi);
+  line-height: var(--lh-kpi);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  color: var(--c-text);
+}
+.sales-tracker .st-kpi__sub {
+  margin-top: 4px;
+  font-size: var(--fs-xs);
+  color: var(--c-text-muted);
+}
+.sales-tracker .st-kpi__value--success { color: var(--c-success-fg); }
+.sales-tracker .st-kpi__value--warning { color: var(--c-warning-fg); }
+.sales-tracker .st-kpi__value--danger  { color: var(--c-danger-fg); }
+.sales-tracker .st-kpi__icon { width: 18px; height: 18px; flex: 0 0 18px; }
+
+/* -------------------------------------------------------------------------
+ * 8. Gauge (SVG arc) — large / mini / awaiting
+ * ------------------------------------------------------------------------- */
+
+.sales-tracker .st-gauge { display: block; }
+.sales-tracker .st-gauge__track { stroke: var(--c-surface-alt); }
+.sales-tracker .st-gauge--high .st-gauge__value { stroke: var(--c-gauge-high); }
+.sales-tracker .st-gauge--mid  .st-gauge__value { stroke: var(--c-gauge-mid); }
+.sales-tracker .st-gauge--low  .st-gauge__value { stroke: var(--c-gauge-low); }
+.sales-tracker .st-gauge__value { transition: stroke-dasharray var(--t-slow) var(--ease-out); }
+
+.sales-tracker .st-gauge__num {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  fill: var(--c-text);
+}
+.sales-tracker .st-gauge__pct {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  fill: var(--c-text-muted);
+}
+.sales-tracker .st-gauge__lbl {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  fill: var(--c-text-muted);
+  letter-spacing: 1.4;
+}
+
+/* Mini-gauge score cell (table rows) */
+.sales-tracker .st-score-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-variant-numeric: tabular-nums;
+}
+.sales-tracker .st-score-cell__num { font-weight: 600; }
+.sales-tracker .st-score-cell__tag {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: var(--r-sm);
+  letter-spacing: 0.02em;
+}
+.sales-tracker .st-score-cell__tag--high { color: var(--c-success-fg); background: var(--c-success-bg); }
+.sales-tracker .st-score-cell__tag--mid  { color: var(--c-warning-fg); background: var(--c-warning-bg); }
+.sales-tracker .st-score-cell__tag--low  { color: var(--c-danger-fg);  background: var(--c-danger-bg); }
+
+/* -------------------------------------------------------------------------
+ * 9. Distance proximity bar
+ * ------------------------------------------------------------------------- */
+
+.sales-tracker .st-prox {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.sales-tracker .st-prox__bar { display: block; }
+.sales-tracker .st-prox__bar-track { fill: var(--c-border-strong); }
+.sales-tracker .st-prox__num {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  font-size: var(--fs-sm);
+  color: var(--c-text);
+}
+.sales-tracker .st-prox__qual {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--c-text-muted);
+  padding: 2px 6px;
+  border-radius: var(--r-sm);
+}
+.sales-tracker .st-prox__qual--near { color: var(--c-success-fg); background: var(--c-success-bg); }
+.sales-tracker .st-prox__qual--mid  { color: var(--c-warning-fg); background: var(--c-warning-bg); }
+.sales-tracker .st-prox__qual--far  { color: var(--c-danger-fg);  background: var(--c-danger-bg); }
+
+/* -------------------------------------------------------------------------
+ * 10. Badges
+ * ------------------------------------------------------------------------- */
+
+.sales-tracker .st-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: var(--r-pill);
+  border: 1px solid transparent;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  white-space: nowrap;
+}
+.sales-tracker .st-badge svg {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 12px;
+}
+
+.sales-tracker .st-badge--matched {
+  background: var(--c-success-bg);
+  color: var(--c-success-fg);
+  border-color: var(--c-success-border);
+}
+.sales-tracker .st-badge--unmatched {
+  background: var(--c-danger-bg);
+  color: var(--c-danger-fg);
+  border-color: var(--c-danger-border);
+}
+.sales-tracker .st-badge--anomaly {
+  background: var(--c-danger-bg);
+  color: var(--c-danger-fg);
+  border-color: var(--c-danger-border);
+  animation: st-anomaly-bg-pulse 2s var(--ease-out) infinite alternate;
+}
+@keyframes st-anomaly-bg-pulse {
+  from { background: var(--c-danger-bg); }
+  to   { background: #FECACA; }
+}
+
+.sales-tracker .st-badge--gps {
+  background: var(--c-accent-50);
+  color: var(--c-accent-dark);
+  border-color: var(--c-accent-border);
+}
+.sales-tracker .st-badge--manual {
+  background: var(--c-surface-alt);
+  color: var(--c-text);
+  border-color: var(--c-border);
+}
+.sales-tracker .st-badge--neutral {
+  background: var(--c-surface-alt);
+  color: var(--c-text-muted);
+  border-color: var(--c-border);
+}
+
+/* Legacy compatibility — old templates still emit .badge-anomaly */
+.sales-tracker .badge-anomaly {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: var(--r-pill);
+  background: var(--c-danger-bg);
+  color: var(--c-danger-fg);
+  border: 1px solid var(--c-danger-border);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+
+/* -------------------------------------------------------------------------
+ * 11. Tables — designed dashboard look
+ * ------------------------------------------------------------------------- */
+
+.sales-tracker .st-datatable {
+  padding: 0;
+  overflow: hidden;
+}
+.sales-tracker .st-datatable__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-5) var(--sp-6);
+  border-bottom: 1px solid var(--c-border);
+}
+.sales-tracker .st-datatable__filters {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+.sales-tracker .st-datatable table {
+  width: 100%;
+  border-collapse: collapse;
+  background: transparent;
+}
+.sales-tracker .st-datatable thead th {
+  background: var(--c-bg);
+  border-bottom: 1px solid var(--c-border);
+  padding: 12px var(--sp-5);
+  text-align: left;
+  font-size: var(--fs-eyebrow);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--ls-eyebrow);
+  color: var(--c-text);
+  white-space: nowrap;
+}
+.sales-tracker .st-datatable thead th.r { text-align: right; }
+.sales-tracker .st-datatable tbody td {
+  padding: 14px var(--sp-5);
+  border-bottom: 1px solid var(--c-divider);
+  font-size: var(--fs-sm);
+  vertical-align: middle;
+}
+.sales-tracker .st-datatable tbody tr:last-child td { border-bottom: 0; }
+.sales-tracker .st-datatable tbody tr {
+  transition: background var(--t-fast) var(--ease-out);
+}
+.sales-tracker .st-datatable tbody tr:hover { background: var(--c-bg); }
+
+.sales-tracker .st-datatable tbody tr td:first-child {
+  border-left: 4px solid transparent;
+  padding-left: calc(var(--sp-5) - 4px);
+}
+.sales-tracker .st-datatable tbody tr.st-row--ok  td:first-child { border-left-color: var(--c-success); }
+.sales-tracker .st-datatable tbody tr.st-row--mid td:first-child { border-left-color: var(--c-warning); }
+.sales-tracker .st-datatable tbody tr.st-row--bad td:first-child { border-left-color: var(--c-danger); }
+
+.sales-tracker .st-cell-place__name { font-weight: 500; color: var(--c-text); }
+.sales-tracker .st-cell-place__sub {
+  font-size: var(--fs-xs);
+  color: var(--c-text-muted);
+  font-family: var(--font-mono);
+  margin-top: 2px;
+}
+.sales-tracker .st-cell-time__rel { font-weight: 500; color: var(--c-text); }
+.sales-tracker .st-cell-time__abs {
+  font-size: var(--fs-xs);
+  color: var(--c-text-muted);
+  margin-top: 2px;
+  font-variant-numeric: tabular-nums;
+}
+.sales-tracker td.r { text-align: right; }
+.sales-tracker td.st-num { font-variant-numeric: tabular-nums; }
+
+/* Plain <table> fallback inside .sales-tracker (templates that still emit raw tables) */
+.sales-tracker table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--c-surface);
+}
+.sales-tracker th,
+.sales-tracker td {
+  padding: 12px var(--sp-5);
+  border-bottom: 1px solid var(--c-divider);
+  text-align: left;
+  font-size: var(--fs-sm);
+}
+.sales-tracker thead th,
+.sales-tracker th {
+  background: var(--c-bg);
+  border-bottom: 1px solid var(--c-border);
+  font-size: var(--fs-eyebrow);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--ls-eyebrow);
+  color: var(--c-text);
+  white-space: nowrap;
+}
+
+/* Mobile collapse for designed table */
+@media (max-width: 720px) {
+  .sales-tracker .st-datatable thead { display: none; }
+  .sales-tracker .st-datatable tbody tr {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px 12px;
+    padding: var(--sp-4) var(--sp-5);
+    border-bottom: 1px solid var(--c-divider);
+    border-left: 4px solid transparent;
+  }
+  .sales-tracker .st-datatable tbody tr.st-row--ok  { border-left-color: var(--c-success); }
+  .sales-tracker .st-datatable tbody tr.st-row--mid { border-left-color: var(--c-warning); }
+  .sales-tracker .st-datatable tbody tr.st-row--bad { border-left-color: var(--c-danger); }
+  .sales-tracker .st-datatable tbody td {
+    padding: 0;
+    border: 0;
+  }
+  .sales-tracker .st-datatable tbody td:first-child {
+    padding-left: 0;
+    border-left: 0;
+  }
+  .sales-tracker .st-datatable tbody td::before {
+    content: attr(data-label);
+    display: block;
+    font-size: var(--fs-eyebrow);
+    color: var(--c-text);
+    text-transform: uppercase;
+    letter-spacing: var(--ls-eyebrow);
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+}
+
+/* -------------------------------------------------------------------------
+ * 12. Anomaly cards
+ * ------------------------------------------------------------------------- */
+
+.sales-tracker .st-anomaly-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+.sales-tracker .st-anomaly-row {
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  gap: var(--sp-4);
+  align-items: center;
+  padding: var(--sp-4);
+  background: var(--c-surface);
+  border: 1px solid var(--c-danger-border);
+  border-left: 4px solid var(--c-danger);
+  border-radius: var(--r-lg);
+}
+.sales-tracker .st-anomaly-row__icon {
+  width: 40px; height: 40px;
+  border-radius: var(--r-md);
+  background: var(--c-danger-bg);
+  color: var(--c-danger-fg);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  animation: st-anomaly-tile-pulse 2.4s var(--ease-out) infinite alternate;
+}
+@keyframes st-anomaly-tile-pulse {
+  from { background: var(--c-danger-bg); }
+  to   { background: #FECACA; }
+}
+.sales-tracker .st-anomaly-row__icon svg { width: 18px; height: 18px; }
+.sales-tracker .st-anomaly-row__reason {
+  font-weight: 600;
+  font-size: var(--fs-sm);
+  color: var(--c-text);
+}
+.sales-tracker .st-anomaly-row__meta {
+  font-size: var(--fs-xs);
+  color: var(--c-text-muted);
+  margin-top: 2px;
+}
+.sales-tracker .st-anomaly-row__score {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: var(--fs-h3);
+  color: var(--c-danger-fg);
+  text-align: right;
+}
+.sales-tracker .st-anomaly-row__score-label {
+  display: block;
+  font-size: var(--fs-eyebrow);
+  font-weight: 600;
+  letter-spacing: var(--ls-eyebrow);
+  text-transform: uppercase;
+  color: var(--c-text-muted);
+  margin-top: 2px;
+}
+
+/* -------------------------------------------------------------------------
+ * 13. Empty states
+ * ------------------------------------------------------------------------- */
+
+.sales-tracker .st-empty {
+  text-align: center;
+  max-width: 380px;
+  margin: var(--sp-6) auto;
+  padding: var(--sp-8) var(--sp-4);
+  color: var(--c-primary);
+}
+.sales-tracker .st-empty__art {
+  width: 120px;
+  height: 120px;
+  margin: 0 auto var(--sp-4);
+  display: block;
+  opacity: 0.95;
+}
+.sales-tracker .st-empty__title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--c-text);
+  margin-bottom: 6px;
+}
+.sales-tracker .st-empty__body {
+  font-size: var(--fs-sm);
+  color: var(--c-text-muted);
+  margin-bottom: var(--sp-4);
+}
+.sales-tracker .st-empty__art .em-fill-soft  { fill: rgba(14, 165, 164, 0.10); }
+.sales-tracker .st-empty__art .em-fill-white { fill: #FFFFFF; }
+.sales-tracker .st-empty__art .em-accent     { color: var(--c-accent); }
+.sales-tracker .st-empty__art .em-success    { color: var(--c-success); }
+
+/* -------------------------------------------------------------------------
+ * 14. Buttons
+ *     Style both our .st-btn classes AND the default Drupal .button class
+ *     (which Drupal's Form API emits on submit/secondary actions).
+ * ------------------------------------------------------------------------- */
+
+.sales-tracker .st-btn,
+.sales-tracker .button,
+.sales-tracker .form-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 40px;
+  padding: 0 18px;
+  border-radius: var(--r-md);
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  border: 1px solid transparent;
+  cursor: pointer;
+  background: var(--c-primary);
+  color: #FFFFFF;
+  border-color: var(--c-primary);
+  text-decoration: none;
+  transition: background var(--t-fast) var(--ease-out),
+              border-color var(--t-fast) var(--ease-out),
+              transform var(--t-fast) var(--ease-out),
+              box-shadow var(--t-fast) var(--ease-out);
+}
+.sales-tracker .st-btn svg,
+.sales-tracker .button svg,
+.sales-tracker .form-submit svg { width: 14px; height: 14px; }
+
+.sales-tracker .st-btn:hover,
+.sales-tracker .button:hover,
+.sales-tracker .form-submit:hover {
+  background: var(--c-primary-dark);
+  border-color: var(--c-primary-dark);
+  color: #FFFFFF;
+  text-decoration: none;
+}
+.sales-tracker .st-btn:focus-visible,
+.sales-tracker .button:focus-visible,
+.sales-tracker .form-submit:focus-visible {
+  outline: 2px solid var(--c-primary);
+  outline-offset: 2px;
+  box-shadow: var(--sh-focus-primary);
+}
+.sales-tracker .st-btn:active,
+.sales-tracker .button:active,
+.sales-tracker .form-submit:active { transform: scale(0.98); }
+
+.sales-tracker .st-btn--primary {
+  background: var(--c-primary);
+  color: #FFFFFF;
+  border-color: var(--c-primary);
+}
+.sales-tracker .st-btn--primary:hover {
+  background: var(--c-primary-dark);
+  border-color: var(--c-primary-dark);
+}
+
+.sales-tracker .st-btn--secondary {
+  background: var(--c-surface);
+  color: var(--c-text);
+  border-color: var(--c-border-strong);
+}
+.sales-tracker .st-btn--secondary:hover {
+  background: var(--c-surface-alt);
+  color: var(--c-text);
+  border-color: var(--c-border-strong);
+}
+
+.sales-tracker .st-btn--ghost {
+  background: transparent;
+  color: var(--c-text);
+  border-color: transparent;
+}
+.sales-tracker .st-btn--ghost:hover {
+  background: var(--c-surface-alt);
+  color: var(--c-text);
+}
+
+.sales-tracker .st-btn--danger {
+  background: var(--c-danger);
+  color: #FFFFFF;
+  border-color: var(--c-danger);
+}
+.sales-tracker .st-btn--danger:hover {
+  background: #DC2626;
+  border-color: #DC2626;
+}
+.sales-tracker .st-btn--danger:focus-visible {
+  outline-color: var(--c-danger);
+  box-shadow: var(--sh-focus-danger);
+}
+
+.sales-tracker .st-btn--sm { height: 32px; padding: 0 12px; font-size: var(--fs-xs); }
+.sales-tracker .st-btn--lg { height: 48px; padding: 0 22px; font-size: var(--fs-body); }
+.sales-tracker .st-btn--block { width: 100%; }
+
+.sales-tracker .st-btn[disabled],
+.sales-tracker .st-btn:disabled,
+.sales-tracker .st-btn[aria-disabled="true"],
+.sales-tracker .button[disabled],
+.sales-tracker .button:disabled,
+.sales-tracker .form-submit[disabled],
+.sales-tracker .form-submit:disabled {
+  background: var(--c-surface-alt) !important;
+  color: var(--c-text-muted) !important;
+  border-color: var(--c-border) !important;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Inline-script-driven buttons in PlanForm/CheckinForm (Use my location etc.)
+   Use the secondary look so they don't compete with the primary submit. */
+.sales-tracker .st-form-card button[type="button"],
+.sales-tracker form button[type="button"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: var(--r-md);
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  background: var(--c-surface);
+  color: var(--c-text);
+  border: 1px solid var(--c-border-strong);
+  cursor: pointer;
+  transition: background var(--t-fast) var(--ease-out);
+}
+.sales-tracker .st-form-card button[type="button"]:hover,
+.sales-tracker form button[type="button"]:hover {
+  background: var(--c-surface-alt);
+}
+
+/* -------------------------------------------------------------------------
+ * 15. Forms
+ *     We target both our .st-* classes AND Drupal's stock form output:
+ *       .form-text, .form-email, .form-tel, .form-number, .form-date,
+ *       .form-select, .form-textarea, .form-item, .form-item__label,
+ *       .form-item__description, .form-required
+ * ------------------------------------------------------------------------- */
+
+.sales-tracker .st-form-card,
+.sales-tracker .form-card {
+  max-width: 560px;
+  padding: var(--sp-8);
+}
+.sales-tracker .st-form-card > h1,
+.sales-tracker .form-card > h1 { margin-bottom: var(--sp-2); }
+
+/* Drupal wraps every field in .form-item — treat it as our .field */
+.sales-tracker .st-field,
+.sales-tracker .form-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0 0 var(--sp-4) 0;
+}
+
+.sales-tracker .st-field-label,
+.sales-tracker .st-field > label,
+.sales-tracker .form-item label,
+.sales-tracker .form-item__label,
+.sales-tracker label.form-required,
+.sales-tracker label {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--c-text);
+  display: inline-block;
+}
+
+.sales-tracker .st-field__help,
+.sales-tracker .st-field-help,
+.sales-tracker .description,
+.sales-tracker .form-item__description {
+  font-size: var(--fs-xs);
+  color: var(--c-text-muted);
+  margin-top: 2px;
+}
+
+.sales-tracker .st-req,
+.sales-tracker .form-required::after {
+  color: var(--c-text-muted);
+  font-weight: 600;
+  margin-left: 2px;
+}
+.sales-tracker .form-required::after {
+  content: " *";
+}
+.sales-tracker .st-req-text {
+  font-size: var(--fs-xs);
+  color: var(--c-text-muted);
+  font-weight: 500;
+  margin-left: 6px;
+}
+
+/* Inputs: cover our .st-* selectors AND every Drupal Form API output. */
+.sales-tracker .st-field input[type="text"],
+.sales-tracker .st-field input[type="email"],
+.sales-tracker .st-field input[type="password"],
+.sales-tracker .st-field input[type="number"],
+.sales-tracker .st-field input[type="date"],
+.sales-tracker .st-field input[type="tel"],
+.sales-tracker .st-field input:not([type]),
+.sales-tracker .st-field select,
+.sales-tracker .st-field textarea,
+.sales-tracker .st-form-card input[type="text"],
+.sales-tracker .st-form-card input[type="email"],
+.sales-tracker .st-form-card input[type="password"],
+.sales-tracker .st-form-card input[type="number"],
+.sales-tracker .st-form-card input[type="date"],
+.sales-tracker .st-form-card input[type="tel"],
+.sales-tracker .st-form-card select,
+.sales-tracker .st-form-card textarea,
+.sales-tracker .form-text,
+.sales-tracker .form-email,
+.sales-tracker .form-tel,
+.sales-tracker .form-number,
+.sales-tracker .form-date,
+.sales-tracker .form-select,
+.sales-tracker .form-textarea,
+.sales-tracker input[type="text"],
+.sales-tracker input[type="email"],
+.sales-tracker input[type="password"],
+.sales-tracker input[type="number"],
+.sales-tracker input[type="date"],
+.sales-tracker select,
+.sales-tracker textarea {
+  height: 44px;
+  width: 100%;
+  padding: 0 14px;
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  color: var(--c-text);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--r-md);
+  transition: border-color var(--t-fast) var(--ease-out),
+              box-shadow var(--t-fast) var(--ease-out);
+}
+
+.sales-tracker .st-field textarea,
+.sales-tracker .st-form-card textarea,
+.sales-tracker .form-textarea,
+.sales-tracker textarea {
+  height: auto;
+  min-height: 96px;
+  padding: 12px 14px;
+  resize: vertical;
+  line-height: var(--lh-body);
+}
+
+.sales-tracker .form-textarea-wrapper {
+  border: 0;
+  padding: 0;
+}
+
+.sales-tracker .st-field input::placeholder,
+.sales-tracker .st-form-card input::placeholder,
+.sales-tracker input::placeholder,
+.sales-tracker textarea::placeholder {
+  color: var(--c-text-muted);
+  opacity: 1;
+}
+
+.sales-tracker .st-field input:focus,
+.sales-tracker .st-field select:focus,
+.sales-tracker .st-field textarea:focus,
+.sales-tracker .st-form-card input:focus,
+.sales-tracker .st-form-card select:focus,
+.sales-tracker .st-form-card textarea:focus,
+.sales-tracker .form-text:focus,
+.sales-tracker .form-email:focus,
+.sales-tracker .form-tel:focus,
+.sales-tracker .form-number:focus,
+.sales-tracker .form-date:focus,
+.sales-tracker .form-select:focus,
+.sales-tracker .form-textarea:focus,
+.sales-tracker input:focus,
+.sales-tracker select:focus,
+.sales-tracker textarea:focus {
+  outline: 2px solid var(--c-primary);
+  outline-offset: 0;
+  border-color: var(--c-primary);
+  box-shadow: var(--sh-focus-primary);
+}
+
+.sales-tracker .st-field--invalid input,
+.sales-tracker .st-field--invalid select,
+.sales-tracker .st-field--invalid textarea,
+.sales-tracker .form-item--error input,
+.sales-tracker .form-item--error select,
+.sales-tracker .form-item--error textarea,
+.sales-tracker input.error,
+.sales-tracker select.error,
+.sales-tracker textarea.error {
+  border-color: var(--c-danger);
+}
+.sales-tracker .st-field--invalid input:focus,
+.sales-tracker input.error:focus {
+  outline-color: var(--c-danger);
+  box-shadow: var(--sh-focus-danger);
+}
+.sales-tracker .st-field__error,
+.sales-tracker .form-item--error-message {
+  font-size: var(--fs-xs);
+  color: var(--c-danger-fg);
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.sales-tracker .st-field--mono input { font-family: var(--font-mono); }
+
+/* Segmented control (radio group styled as iOS-style toggle) */
+.sales-tracker .st-segmented {
+  display: inline-grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  background: var(--c-surface-alt);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-control);
+}
+.sales-tracker .st-segmented input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 1px;
+  height: 1px;
+}
+.sales-tracker .st-segmented label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--c-text);
+  border-radius: var(--r-sm);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background var(--t-fast) var(--ease-out),
+              color var(--t-fast) var(--ease-out),
+              box-shadow var(--t-fast) var(--ease-out),
+              border-color var(--t-fast) var(--ease-out);
+}
+.sales-tracker .st-segmented label svg { width: 14px; height: 14px; }
+.sales-tracker .st-segmented input:checked + label,
+.sales-tracker .st-segmented label.is-active {
+  background: var(--c-surface);
+  color: var(--c-text);
+  font-weight: 700;
+  border-color: var(--c-border-strong);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+.sales-tracker .st-segmented input:focus-visible + label {
+  outline: 2px solid var(--c-primary);
+  outline-offset: 2px;
+  box-shadow: var(--sh-focus-primary);
+}
+
+/* Form footer */
+.sales-tracker .st-form-card__footer,
+.sales-tracker .form-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--sp-3);
+  padding-top: var(--sp-5);
+  margin-top: var(--sp-5);
+  border-top: 1px solid var(--c-divider);
+}
+@media (max-width: 540px) {
+  .sales-tracker .st-form-card__footer,
+  .sales-tracker .form-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+  .sales-tracker .st-form-card__footer .st-btn,
+  .sales-tracker .form-actions .button,
+  .sales-tracker .form-actions .form-submit { width: 100%; }
+}
+
+/* -------------------------------------------------------------------------
+ * 16. Login shell
+ * ------------------------------------------------------------------------- */
+
+.sales-tracker .st-login-shell {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-6);
+}
+.sales-tracker .st-login-card { width: 100%; max-width: 400px; }
+.sales-tracker .st-login-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  justify-content: center;
+  margin-bottom: var(--sp-6);
+  font-weight: 700;
+  font-size: 18px;
+}
+.sales-tracker .st-login-brand svg { width: 28px; height: 28px; }
+
+/* -------------------------------------------------------------------------
+ * 17. Legacy compatibility for old class names
+ *     (kept minimal — only the names the old CSS used and that old templates
+ *     may still emit during the transition.)
+ * ------------------------------------------------------------------------- */
+
+.sales-tracker .row > * { flex: 1; }
+.sales-tracker .ok  { color: var(--c-success-fg); font-weight: 600; }
+.sales-tracker .bad { color: var(--c-danger-fg);  font-weight: 600; }
+.sales-tracker .muted { color: var(--c-text-muted); font-size: var(--fs-sm); }
+
+/* =========================================================================
+ * 18. v2 components — appended (do not edit above).
+ *     Scoped under .sales-tracker. Uses existing tokens only.
+ *     New classes:
+ *       .st-bottom-nav, .st-bottom-nav__item, .st-bottom-nav__item--active
+ *       .st-tabs, .st-tabs__item, .st-tabs__item--active
+ *       .st-filter-bar, .st-filter-chips, .st-filter-chip, .st-filter-chip--active
+ *       .st-account-row, .st-account-type-tag (--doctor/--chemist/--stockist)
+ *       .st-search-input
+ *       .st-chart-bar, .st-chart-bar__row, .st-chart-bar__label,
+ *       .st-chart-bar__fill, .st-chart-bar__num
+ *       .st-chart-donut, .st-chart-donut__legend, .st-chart-donut__swatch
+ *       .st-stat-tile, .st-stat-tile__num, .st-stat-tile__label, .st-stat-tile__icon
+ *       .st-territory-card, .st-territory-card__heading, .st-territory-card__nums,
+ *       .st-territory-grid
+ *       .st-drill-link
+ *       .st-visit-row
+ *       .st-period-summary
+ *       .st-planned-list, .st-planned-item
+ *       .st-field--checkboxes
+ * ========================================================================= */
+
+/* ---- 18.1 Sticky bottom nav (mobile only — ≤720px) ---- */
+.sales-tracker .st-bottom-nav {
+  display: none;
+}
+@media (max-width: 720px) {
+  .sales-tracker .st-bottom-nav {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    z-index: 60;
+    display: flex;
+    align-items: stretch;
+    justify-content: space-around;
+    height: 56px;
+    background: var(--c-surface);
+    border-top: 1px solid var(--c-border);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    box-shadow: 0 -2px 8px rgba(15, 23, 42, 0.05);
+  }
+  /* Add bottom padding to the page so the nav doesn't cover content. */
+  .sales-tracker { padding-bottom: 64px; }
+}
+.sales-tracker .st-bottom-nav__item {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  font-size: 12px;
+  line-height: 1;
+  color: var(--c-text-muted);
+  text-decoration: none;
+  padding: 4px 2px;
+  transition: color var(--t-fast) var(--ease-out);
+}
+.sales-tracker .st-bottom-nav__item svg {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  color: currentColor;
+}
+.sales-tracker .st-bottom-nav__item:hover { color: var(--c-text); text-decoration: none; }
+.sales-tracker .st-bottom-nav__item--active {
+  color: var(--c-primary);
+  font-weight: 600;
+}
+
+/* ---- 18.2 Tabs (horizontal, primary underline on active) ---- */
+.sales-tracker .st-tabs {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  border-bottom: 1px solid var(--c-border);
+  margin-bottom: var(--sp-4);
+}
+.sales-tracker .st-tabs__item {
+  position: relative;
+  padding: 10px 14px;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--c-text-muted);
+  text-decoration: none;
+  border-radius: var(--r-sm) var(--r-sm) 0 0;
+  white-space: nowrap;
+  transition: color var(--t-fast) var(--ease-out);
+}
+.sales-tracker .st-tabs__item:hover {
+  color: var(--c-text);
+  background: var(--c-surface-alt);
+  text-decoration: none;
+}
+.sales-tracker .st-tabs__item--active {
+  color: var(--c-text);
+  font-weight: 600;
+}
+.sales-tracker .st-tabs__item--active::after {
+  content: "";
+  position: absolute;
+  left: 8px; right: 8px; bottom: -1px;
+  height: 2px;
+  background: var(--c-primary);
+  border-radius: 2px;
+}
+@media (max-width: 720px) {
+  .sales-tracker .st-tabs {
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+  .sales-tracker .st-tabs__item {
+    scroll-snap-align: start;
+    flex-shrink: 0;
+  }
+}
+
+/* ---- 18.3 Filter bar + chips + search input ---- */
+.sales-tracker .st-filter-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  margin-top: var(--sp-4);
+}
+.sales-tracker .st-filter-chips {
+  display: flex;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+.sales-tracker .st-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 14px;
+  background: var(--c-surface-alt);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-pill);
+  font-size: var(--fs-sm);
+  color: var(--c-text);
+  text-decoration: none;
+  transition: background var(--t-fast) var(--ease-out), border-color var(--t-fast) var(--ease-out);
+}
+.sales-tracker .st-filter-chip:hover {
+  background: var(--c-surface);
+  border-color: var(--c-border-strong);
+  text-decoration: none;
+}
+.sales-tracker .st-filter-chip--active {
+  background: var(--c-primary-50);
+  border-color: var(--c-primary-100);
+  color: var(--c-primary-dark);
+  font-weight: 600;
+}
+
+.sales-tracker .st-search-input {
+  flex: 1 1 200px;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--r-md);
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  color: var(--c-text);
+  background: var(--c-surface);
+}
+.sales-tracker .st-search-input:focus {
+  outline: none;
+  border-color: var(--c-primary);
+  box-shadow: var(--sh-focus-primary);
+}
+
+/* ---- 18.4 Account rows + type tags ---- */
+.sales-tracker .st-account-row td:first-child {
+  border-left: 4px solid var(--c-primary-100);
+}
+.sales-tracker .st-account-type-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: var(--r-pill);
+  border: 1px solid transparent;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+.sales-tracker .st-account-type-tag svg {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 12px;
+}
+.sales-tracker .st-account-type-tag--doctor {
+  background: var(--c-accent-50);
+  color: var(--c-accent-dark);
+  border-color: var(--c-accent-border);
+}
+.sales-tracker .st-account-type-tag--chemist {
+  background: var(--c-primary-50);
+  color: var(--c-primary-dark);
+  border-color: var(--c-primary-100);
+}
+.sales-tracker .st-account-type-tag--stockist {
+  background: var(--c-success-bg);
+  color: var(--c-success-fg);
+  border-color: var(--c-success-border);
+}
+
+/* ---- 18.5 Bar chart ---- */
+.sales-tracker .st-chart-bar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+.sales-tracker .st-chart-bar__row {
+  display: grid;
+  grid-template-columns: 100px 1fr 56px;
+  gap: var(--sp-3);
+  align-items: center;
+}
+.sales-tracker .st-chart-bar__label {
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--c-text);
+}
+.sales-tracker .st-chart-bar__fill {
+  display: block;
+  width: 100%;
+}
+.sales-tracker .st-chart-bar__num {
+  text-align: right;
+  font-weight: 700;
+  font-size: var(--fs-sm);
+  color: var(--c-text);
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 720px) {
+  .sales-tracker .st-chart-bar__row {
+    grid-template-columns: 80px 1fr 44px;
+  }
+}
+
+/* ---- 18.6 Donut chart ---- */
+.sales-tracker .st-chart-donut {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-6);
+  flex-wrap: wrap;
+}
+.sales-tracker .st-chart-donut__legend {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  font-size: var(--fs-sm);
+}
+.sales-tracker .st-chart-donut__legend > div {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.sales-tracker .st-chart-donut__swatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: var(--r-sm);
+}
+
+/* ---- 18.7 Stat tile (small KPI card used in period strips) ---- */
+.sales-tracker .st-stat-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--sp-4);
+  position: relative;
+}
+.sales-tracker .st-stat-tile__icon {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-md);
+  background: var(--c-primary-50);
+  color: var(--c-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--sp-2);
+}
+.sales-tracker .st-stat-tile__icon svg {
+  width: 16px;
+  height: 16px;
+}
+.sales-tracker .st-stat-tile__num {
+  font-size: var(--fs-kpi);
+  line-height: var(--lh-kpi);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--c-text);
+  font-variant-numeric: tabular-nums;
+}
+.sales-tracker .st-stat-tile__label {
+  font-size: var(--fs-eyebrow);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--ls-eyebrow);
+  color: var(--c-text-muted);
+}
+
+/* ---- 18.8 Territory card (used on the proctor pages) ---- */
+.sales-tracker .st-territory-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--sp-4);
+  margin-top: var(--sp-6);
+}
+.sales-tracker .st-territory-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  text-decoration: none;
+  color: var(--c-text);
+}
+.sales-tracker .st-territory-card:hover { text-decoration: none; }
+.sales-tracker .st-territory-card__heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+.sales-tracker .st-territory-card__heading h3 {
+  margin: 0;
+  font-size: var(--fs-h3);
+  font-weight: 600;
+}
+.sales-tracker .st-territory-card__nums {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--sp-2);
+}
+.sales-tracker .st-territory-card__nums > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+@media (max-width: 480px) {
+  .sales-tracker .st-territory-card__nums { grid-template-columns: repeat(2, 1fr); }
+}
+.sales-tracker .st-drill-link {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--c-primary);
+  margin-top: var(--sp-2);
+}
+
+/* ---- 18.9 Visit row (history table — slightly looser than checkin rows) ---- */
+.sales-tracker .st-visit-row td:first-child {
+  border-left: 4px solid transparent;
+}
+.sales-tracker .st-row--ok.st-visit-row td:first-child  { border-left-color: var(--c-success); }
+.sales-tracker .st-row--mid.st-visit-row td:first-child { border-left-color: var(--c-warning); }
+.sales-tracker .st-row--bad.st-visit-row td:first-child { border-left-color: var(--c-danger); }
+
+/* ---- 18.10 Period summary strip ---- */
+.sales-tracker .st-period-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--sp-4);
+  margin-top: var(--sp-6);
+}
+@media (max-width: 900px) { .sales-tracker .st-period-summary { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 480px) { .sales-tracker .st-period-summary { grid-template-columns: 1fr; } }
+
+/* ---- 18.11 Planned list (today's planned accounts on the dashboard) ---- */
+.sales-tracker .st-planned-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+.sales-tracker .st-planned-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  padding: var(--sp-3) 0;
+  border-bottom: 1px solid var(--c-divider);
+}
+.sales-tracker .st-planned-item:last-child { border-bottom: 0; }
+.sales-tracker .st-planned-item > div:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+@media (max-width: 720px) {
+  .sales-tracker .st-planned-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .sales-tracker .st-planned-item .st-btn { width: 100%; }
+}
+
+/* ---- 18.12 Checkbox-list field variant (PlanForm account picker) ---- */
+.sales-tracker .st-field--checkboxes .form-checkboxes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  background: var(--c-surface-alt);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  max-height: 280px;
+  overflow-y: auto;
+}
+.sales-tracker .st-field--checkboxes .form-checkboxes .form-item {
+  margin: 0;
+}
+.sales-tracker .st-field--checkboxes label {
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
+/* ---- 18.13 Minimum-width safety for 360px screens ---- */
+@media (max-width: 360px) {
+  .sales-tracker .st-card { padding: var(--sp-4); }
+  .sales-tracker h1 { font-size: 20px; }
+}
+
+/* ===========================================================
+   Quick-access button menubar (Drupal)
+   =========================================================== */
+.sales-tracker .st-menubar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+  margin: 0 0 16px 0;
+}
+.sales-tracker .st-menubar__btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 16px 12px;
+  min-height: 88px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  color: var(--c-text);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+  text-align: center;
+}
+.sales-tracker .st-menubar__btn:hover,
+.sales-tracker .st-menubar__btn:focus-visible {
+  border-color: var(--c-primary);
+  box-shadow: var(--sh-1);
+  transform: translateY(-1px);
+  text-decoration: none;
+  color: var(--c-text);
+}
+.sales-tracker .st-menubar__btn:focus-visible {
+  outline: 2px solid var(--c-primary);
+  outline-offset: 2px;
+}
+.sales-tracker .st-menubar__btn-icon {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  color: var(--c-primary);
+}
+.sales-tracker .st-menubar__btn-icon svg { width: 100%; height: 100%; }
+.sales-tracker .st-menubar__btn--active {
+  background: linear-gradient(135deg, var(--c-primary) 0%, var(--c-primary-dark) 100%);
+  border-color: var(--c-primary-dark);
+  color: #fff;
+  box-shadow: var(--sh-2);
+}
+.sales-tracker .st-menubar__btn--active .st-menubar__btn-icon { color: #fff; }
+.sales-tracker .st-menubar__btn--active:hover { color: #fff; }
+
+/* Company banner — visible inside the .sales-tracker scope of every page */
+.sales-tracker .st-company-banner {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 10px 16px;
+  margin: 0 0 16px 0;
+  background: linear-gradient(135deg, var(--c-primary) 0%, var(--c-primary-dark) 100%);
+  color: #fff;
+  border-radius: var(--r-md);
+  box-shadow: var(--sh-1);
+  font-size: 16px;
+  letter-spacing: 0.01em;
+}
+.sales-tracker .st-company-banner strong { font-size: 17px; font-weight: 700; letter-spacing: 0.02em; }
+.sales-tracker .st-company-banner__sub {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.82;
+}
+
+@media (max-width: 720px) {
+  .sales-tracker .st-menubar {
+    grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+    gap: 8px;
+  }
+  .sales-tracker .st-menubar__btn { min-height: 76px; padding: 12px 8px; font-size: 12px; }
+  .sales-tracker .st-menubar__btn-icon { width: 22px; height: 22px; }
+  .sales-tracker .st-company-banner { font-size: 14px; padding: 10px 12px; }
+  .sales-tracker .st-company-banner strong { font-size: 15px; }
+}

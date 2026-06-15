@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}{{ district.name }} &middot; Proctor &middot; Bishwa Medicare Pvt Ltd{% endblock %}
+{% block content %}
+  {% set active_menu = "proctor" %}
+  {% include "_menubar.html" %}
+
+<section class="card card--focal">
+  <span class="eyebrow eyebrow--muted">
+    <a href="{{ url_for('proctor_index') }}">India</a>
+    &rsaquo;
+    <a href="{{ url_for('proctor_region', rid=district.region_id) }}">{{ district.region_name }}</a>
+    &rsaquo;
+    {{ district.name }}
+  </span>
+  <h1>{{ district.name }}</h1>
+  <p class="muted">{{ district.region_name }} &middot; Employee rollup.</p>
+</section>
+
+<section class="card datatable" style="margin-top: 24px;" aria-labelledby="empTitle">
+  <header class="datatable__head">
+    <h2 id="empTitle" class="card__title">Employees</h2>
+    <span class="card__sub">{{ rows|length }} rep{{ '' if rows|length == 1 else 's' }}</span>
+  </header>
+  {% if rows %}
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Territory</th>
+        <th class="r">Today</th>
+        <th class="r">Week</th>
+        <th class="r">Month</th>
+        <th class="r">Quarter</th>
+        <th class="r"></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for e in rows %}
+      <tr>
+        <td data-label="Name">
+          <div class="cell-place__name">{{ e.name }}</div>
+          <div class="cell-place__sub">{{ e.email }}</div>
+        </td>
+        <td data-label="Territory">{{ e.territory or '—' }}</td>
+        <td data-label="Today" class="r num">{{ e.visits_day }}</td>
+        <td data-label="Week" class="r num">{{ e.visits_week }}</td>
+        <td data-label="Month" class="r num">{{ e.visits_month }}</td>
+        <td data-label="Quarter" class="r num">{{ e.visits_quarter }}</td>
+        <td data-label="" class="r">
+          <a class="btn btn--ghost btn--sm drill-link" href="{{ url_for('proctor_employee', eid=e.id) }}">Open</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty"><div class="empty__title">No employees in this district</div></div>
+  {% endif %}
+</section>
+{% endblock %}

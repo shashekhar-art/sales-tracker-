@@ -1,0 +1,222 @@
+<div class="sales-tracker">
+{{ menubar }}
+
+  <section class="st-card st-card--focal">
+    <header class="st-card__head">
+      <h1 class="st-card__title">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+             style="color: var(--c-primary); vertical-align: -3px; margin-right: 6px;" aria-hidden="true">
+          <path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/>
+        </svg>
+        Reports
+      </h1>
+      <a href="{{ path('sales_tracker.reports.csv', {type: 'visits'}, {'query': {'period': period}}) }}" class="st-btn st-btn--secondary st-btn--sm">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+             style="width:14px;height:14px;vertical-align:-2px;margin-right:4px;">
+          <path d="M8 1v10M4 7l4 4 4-4"/><path d="M2 13h12"/>
+        </svg>
+        Download CSV
+      </a>
+    </header>
+
+    {# Period tabs #}
+    <nav class="st-tabs" aria-label="Report period">
+      {% set periods = {'day': 'Today', 'week': 'This week', 'month': 'This month', 'quarter': 'This quarter'} %}
+      {% for k, label in periods %}
+        <a href="{{ path('sales_tracker.reports', {}, {'query': {'period': k}}) }}"
+           class="st-tabs__item {{ period == k ? 'st-tabs__item--active' : '' }}">
+          {{ label }}
+        </a>
+      {% endfor %}
+    </nav>
+  </section>
+
+  {# Period summary KPI strip #}
+  {% set total = stats.total_visits|default(stats.counts.total|default(0)) %}
+  {% set by_type = stats.by_type|default(stats.counts|default({'doctor': 0, 'chemist': 0, 'stockist': 0})) %}
+  {% set by_outcome = stats.by_outcome|default({'met': 0, 'not_met': 0, 'rescheduled': 0}) %}
+  {% set target = stats.target.target_count|default(0) %}
+  {% set achievement = (target > 0) ? (total * 100 / target) : 0 %}
+
+  <div class="st-period-summary">
+    <div class="st-card st-stat-tile">
+      <span class="st-stat-tile__icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 21s-7-7.5-7-12a7 7 0 1 1 14 0c0 4.5-7 12-7 12z"/>
+          <circle cx="12" cy="9" r="2.5"/>
+        </svg>
+      </span>
+      <span class="st-stat-tile__num st-num">{{ total }}</span>
+      <span class="st-stat-tile__label">Total visits</span>
+    </div>
+    <div class="st-card st-stat-tile">
+      <span class="st-stat-tile__icon" style="background: var(--c-accent-50); color: var(--c-accent-dark);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M8 1a3 3 0 0 0-3 3v3a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+        </svg>
+      </span>
+      <span class="st-stat-tile__num st-num">{{ by_type.doctor|default(0) }}</span>
+      <span class="st-stat-tile__label">Doctors</span>
+    </div>
+    <div class="st-card st-stat-tile">
+      <span class="st-stat-tile__icon" style="background: var(--c-primary-50); color: var(--c-primary-dark);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M5 3h14v6l-4 6 4 6v-2H5v2l4-6-4-6z"/>
+        </svg>
+      </span>
+      <span class="st-stat-tile__num st-num">{{ by_type.chemist|default(0) }}</span>
+      <span class="st-stat-tile__label">Chemists</span>
+    </div>
+    <div class="st-card st-stat-tile">
+      <span class="st-stat-tile__icon" style="background: var(--c-success-bg); color: var(--c-success-fg);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="3" y="7" width="18" height="14" rx="1"/><path d="M3 11h18M8 7V4h8v3"/>
+        </svg>
+      </span>
+      <span class="st-stat-tile__num st-num">{{ by_type.stockist|default(0) }}</span>
+      <span class="st-stat-tile__label">Stockists</span>
+    </div>
+  </div>
+
+  <div class="st-dashboard-grid">
+    {# Bar chart — visit-type counts #}
+    <section class="st-card" aria-labelledby="barTitle">
+      <header class="st-card__head">
+        <h2 id="barTitle" class="st-card__title">Visits by account type</h2>
+        <span class="st-card__sub">{{ periods[period]|default('Period') }}</span>
+      </header>
+
+      {% set max_val = [by_type.doctor|default(0), by_type.chemist|default(0), by_type.stockist|default(0)]|reduce((m, v) => v > m ? v : m, 1) %}
+      <div class="st-chart-bar">
+        {% set rows = [
+          {'label': 'Doctors',   'val': by_type.doctor|default(0),   'color': 'var(--c-accent)'},
+          {'label': 'Chemists',  'val': by_type.chemist|default(0),  'color': 'var(--c-primary)'},
+          {'label': 'Stockists', 'val': by_type.stockist|default(0), 'color': 'var(--c-success)'}
+        ] %}
+        {% for r in rows %}
+          {% set pct = max_val > 0 ? (r.val * 100 / max_val) : 0 %}
+          <div class="st-chart-bar__row" aria-label="{{ r.label }}: {{ r.val }}">
+            <span class="st-chart-bar__label">{{ r.label }}</span>
+            <svg class="st-chart-bar__fill" width="100%" height="14" viewBox="0 0 100 14" preserveAspectRatio="none" aria-hidden="true">
+              <rect x="0" y="3" width="100" height="8" rx="4" fill="var(--c-surface-alt)"/>
+              <rect x="0" y="3" width="{{ pct|number_format(2, '.', '') }}" height="8" rx="4" fill="{{ r.color }}"/>
+            </svg>
+            <span class="st-chart-bar__num st-num">{{ r.val }}</span>
+          </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    {# Donut chart — outcomes #}
+    <section class="st-card" aria-labelledby="donutTitle">
+      <header class="st-card__head">
+        <h2 id="donutTitle" class="st-card__title">Outcomes</h2>
+        <span class="st-card__sub">{{ total }} total</span>
+      </header>
+
+      {% set met = by_outcome.met|default(0) %}
+      {% set notmet = by_outcome.not_met|default(0) %}
+      {% set resch = by_outcome.rescheduled|default(0) %}
+      {% set sum = met + notmet + resch %}
+      {# Circumference for r=42: 2*pi*42 = 263.89 #}
+      {% set circ = 263.89 %}
+      {% set met_len = sum > 0 ? (met * circ / sum) : 0 %}
+      {% set nm_len  = sum > 0 ? (notmet * circ / sum) : 0 %}
+      {% set rs_len  = sum > 0 ? (resch * circ / sum) : 0 %}
+
+      <div class="st-chart-donut">
+        <svg width="180" height="180" viewBox="0 0 100 100" role="img"
+             aria-label="Outcomes — {{ met }} met, {{ notmet }} not met, {{ resch }} rescheduled">
+          <circle cx="50" cy="50" r="42" fill="none" stroke="var(--c-surface-alt)" stroke-width="14"/>
+          {% if sum > 0 %}
+            {# Segment 1: met (success) starts at offset 0 #}
+            <circle cx="50" cy="50" r="42" fill="none"
+                    stroke="var(--c-success)" stroke-width="14"
+                    stroke-dasharray="{{ met_len|number_format(2, '.', '') }} {{ (circ - met_len)|number_format(2, '.', '') }}"
+                    stroke-dashoffset="0"
+                    transform="rotate(-90 50 50)"/>
+            {# Segment 2: not_met (danger) — dash gap to start where met ended #}
+            <circle cx="50" cy="50" r="42" fill="none"
+                    stroke="var(--c-danger)" stroke-width="14"
+                    stroke-dasharray="{{ nm_len|number_format(2, '.', '') }} {{ (circ - nm_len)|number_format(2, '.', '') }}"
+                    stroke-dashoffset="{{ (-met_len)|number_format(2, '.', '') }}"
+                    transform="rotate(-90 50 50)"/>
+            {# Segment 3: rescheduled (warning) #}
+            <circle cx="50" cy="50" r="42" fill="none"
+                    stroke="var(--c-warning)" stroke-width="14"
+                    stroke-dasharray="{{ rs_len|number_format(2, '.', '') }} {{ (circ - rs_len)|number_format(2, '.', '') }}"
+                    stroke-dashoffset="{{ (-met_len - nm_len)|number_format(2, '.', '') }}"
+                    transform="rotate(-90 50 50)"/>
+          {% endif %}
+          <text x="50" y="48" text-anchor="middle" font-size="14" font-weight="700"
+                fill="var(--c-text)" style="font-family: var(--font-sans); font-variant-numeric: tabular-nums;">
+            {{ sum }}
+          </text>
+          <text x="50" y="62" text-anchor="middle" font-size="7"
+                fill="var(--c-text-muted)" style="font-family: var(--font-sans); letter-spacing: 1.4;">VISITS</text>
+        </svg>
+        <div class="st-chart-donut__legend">
+          <div><span class="st-chart-donut__swatch" style="background: var(--c-success);"></span> Met <span class="st-num">{{ met }}</span></div>
+          <div><span class="st-chart-donut__swatch" style="background: var(--c-danger);"></span> Not met <span class="st-num">{{ notmet }}</span></div>
+          <div><span class="st-chart-donut__swatch" style="background: var(--c-warning);"></span> Rescheduled <span class="st-num">{{ resch }}</span></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  {% if target > 0 %}
+    <section class="st-card">
+      <header class="st-card__head">
+        <h2 class="st-card__title">Target progress</h2>
+        <span class="st-card__sub">{{ total }} of {{ target }}</span>
+      </header>
+      {% set pct = achievement > 100 ? 100 : achievement %}
+      {% set ttone = achievement >= 80 ? 'var(--c-success)' : (achievement >= 50 ? 'var(--c-warning)' : 'var(--c-danger)') %}
+      <svg width="100%" height="14" viewBox="0 0 100 14" preserveAspectRatio="none" aria-hidden="true">
+        <rect x="0" y="3" width="100" height="8" rx="4" fill="var(--c-surface-alt)"/>
+        <rect x="0" y="3" width="{{ pct|number_format(2, '.', '') }}" height="8" rx="4" fill="{{ ttone }}"/>
+      </svg>
+      <p class="st-muted">{{ achievement|number_format(0) }}% of target</p>
+    </section>
+  {% endif %}
+
+  <nav class="st-bottom-nav" aria-label="Primary mobile">
+    <a href="{{ path('sales_tracker.dashboard') }}" class="st-bottom-nav__item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3 12L12 3l9 9"/><path d="M5 10v10h14V10"/>
+      </svg><span>Home</span>
+    </a>
+    <a href="{{ path('sales_tracker.plan') }}" class="st-bottom-nav__item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="4" y="5" width="16" height="16" rx="2"/><path d="M16 3v4M8 3v4M4 11h16"/>
+      </svg><span>Plan</span>
+    </a>
+    <a href="{{ path('sales_tracker.visit') }}" class="st-bottom-nav__item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 21s-7-7.5-7-12a7 7 0 1 1 14 0c0 4.5-7 12-7 12z"/>
+        <circle cx="12" cy="9" r="2.5"/>
+      </svg><span>Visit</span>
+    </a>
+    <a href="{{ path('sales_tracker.visits.history') }}" class="st-bottom-nav__item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
+      </svg><span>History</span>
+    </a>
+    <a href="{{ path('sales_tracker.reports') }}" class="st-bottom-nav__item st-bottom-nav__item--active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/>
+      </svg><span>Reports</span>
+    </a>
+  </nav>
+</div>

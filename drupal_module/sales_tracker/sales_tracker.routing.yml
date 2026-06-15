@@ -1,0 +1,178 @@
+sales_tracker.dashboard:
+  path: '/sales/dashboard'
+  defaults:
+    _controller: '\Drupal\sales_tracker\Controller\DashboardController::view'
+    _title: 'My dashboard'
+  requirements:
+    _permission: 'use sales tracker'
+
+sales_tracker.plan:
+  path: '/sales/plan'
+  defaults:
+    _form: '\Drupal\sales_tracker\Form\PlanForm'
+    _title: 'Plan today'
+  requirements:
+    _permission: 'use sales tracker'
+
+sales_tracker.checkin:
+  path: '/sales/checkin'
+  defaults:
+    _form: '\Drupal\sales_tracker\Form\CheckinForm'
+    _title: 'Check in'
+  requirements:
+    _permission: 'use sales tracker'
+
+sales_tracker.history:
+  path: '/sales/history'
+  defaults:
+    _controller: '\Drupal\sales_tracker\Controller\DashboardController::history'
+    _title: 'My history'
+  requirements:
+    _permission: 'use sales tracker'
+
+sales_tracker.admin:
+  path: '/sales/admin'
+  defaults:
+    _controller: '\Drupal\sales_tracker\Controller\AdminController::view'
+    _title: 'Sales tracker admin'
+  requirements:
+    _permission: 'administer sales tracker'
+
+sales_tracker.settings:
+  path: '/admin/config/sales-tracker/settings'
+  defaults:
+    _form: '\Drupal\sales_tracker\Form\SettingsForm'
+    _title: 'Sales Tracker settings'
+  requirements:
+    _permission: 'administer sales tracker'
+
+# ============================================================
+# v2 routes
+# ============================================================
+
+# --- Accounts directory ---
+# List + view are readable by any "use sales tracker" employee so they can
+# follow planned-item links from the dashboard. CRUD stays admin-only.
+sales_tracker.accounts:
+  path: '/sales/accounts'
+  defaults:
+    _controller: '\Drupal\sales_tracker\Controller\AccountsController::listPage'
+    _title: 'Accounts'
+  requirements:
+    _permission: 'use sales tracker'
+
+sales_tracker.accounts.add:
+  path: '/sales/accounts/add'
+  defaults:
+    _form: '\Drupal\sales_tracker\Form\AccountForm'
+    _title: 'Add account'
+  requirements:
+    _permission: 'administer sales tracker'
+
+sales_tracker.accounts.view:
+  path: '/sales/accounts/{id}'
+  defaults:
+    _controller: '\Drupal\sales_tracker\Controller\AccountsController::viewPage'
+    _title: 'Account'
+  requirements:
+    _permission: 'use sales tracker'
+    id: \d+
+
+sales_tracker.accounts.edit:
+  path: '/sales/accounts/{account_id}/edit'
+  defaults:
+    _form: '\Drupal\sales_tracker\Form\AccountForm'
+    _title: 'Edit account'
+  requirements:
+    _permission: 'administer sales tracker'
+    account_id: \d+
+
+sales_tracker.accounts.delete:
+  path: '/sales/accounts/{id}/delete'
+  defaults:
+    _controller: '\Drupal\sales_tracker\Controller\AccountsController::deletePage'
+    _title: 'Delete account'
+  requirements:
+    _permission: 'administer sales tracker'
+    id: \d+
+  methods: [POST]
+
+# --- Visit (log a customer visit) ---
+sales_tracker.visit:
+  path: '/sales/visit'
+  defaults:
+    _form: '\Drupal\sales_tracker\Form\VisitForm'
+    _title: 'Log visit'
+  requirements:
+    _permission: 'use sales tracker'
+
+sales_tracker.visits.history:
+  path: '/sales/visits/history'
+  defaults:
+    _controller: '\Drupal\sales_tracker\Controller\VisitsController::history'
+    _title: 'Visit history'
+  requirements:
+    _permission: 'use sales tracker'
+
+# --- Reports ---
+sales_tracker.reports:
+  path: '/sales/reports'
+  defaults:
+    _controller: '\Drupal\sales_tracker\Controller\ReportsController::view'
+    _title: 'Reports'
+  requirements:
+    _permission: 'use sales tracker'
+
+sales_tracker.reports.csv:
+  path: '/sales/reports/csv/{type}'
+  defaults:
+    _controller: '\Drupal\sales_tracker\Controller\ReportsController::csv'
+    _title: 'CSV export'
+  requirements:
+    _permission: 'use sales tracker'
+    type: 'visits|accounts|anomalies'
+
+# --- Targets (admin) ---
+sales_tracker.targets:
+  path: '/sales/targets'
+  defaults:
+    _form: '\Drupal\sales_tracker\Form\TargetForm'
+    _title: 'Set target'
+  requirements:
+    _permission: 'administer sales tracker'
+
+# --- Proctor (national) ---
+sales_tracker.proctor:
+  path: '/sales/proctor'
+  defaults:
+    _controller: '\Drupal\sales_tracker\Controller\ProctorController::india'
+    _title: 'Proctor — India'
+  requirements:
+    _permission: 'administer sales tracker'
+
+sales_tracker.proctor.region:
+  path: '/sales/proctor/region/{rid}'
+  defaults:
+    _controller: '\Drupal\sales_tracker\Controller\ProctorController::region'
+    _title: 'Proctor — Region'
+  requirements:
+    _permission: 'administer sales tracker'
+    rid: \d+
+
+sales_tracker.proctor.district:
+  path: '/sales/proctor/district/{did}'
+  defaults:
+    _controller: '\Drupal\sales_tracker\Controller\ProctorController::district'
+    _title: 'Proctor — District'
+  requirements:
+    _permission: 'administer sales tracker'
+    did: \d+
+
+sales_tracker.proctor.employee:
+  path: '/sales/proctor/employee/{eid}'
+  defaults:
+    _controller: '\Drupal\sales_tracker\Controller\ProctorController::employee'
+    _title: 'Proctor — Employee'
+  requirements:
+    _permission: 'administer sales tracker'
+    eid: \d+

@@ -1,0 +1,578 @@
+{% extends "base.html" %}
+{% block title %}Dashboard &middot; Bishwa Medicare Pvt Ltd{% endblock %}
+{% block content %}
+  {% set active_menu = "dashboard" %}
+  {% include "_menubar.html" %}
+
+{# ===== Compute the most recent check-in (history is "recent" — first row is the latest) ===== #}
+{% set last_checkin = history[0] if history else none %}
+
+{# ===== Hero — today's plan + match gauge ===== #}
+{% if plan %}
+  <section class="card card--focal" aria-labelledby="planTitle">
+    <div class="hero">
+      <div class="hero__plan">
+        <span class="eyebrow eyebrow--muted">Today's plan</span>
+        <h1 id="planTitle">
+          <svg class="hero__pin" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 21s-7-7.5-7-12a7 7 0 1 1 14 0c0 4.5-7 12-7 12z"/>
+            <circle cx="12" cy="9" r="2.5"/>
+          </svg>
+          <span>{{ plan.planned_place_name }}</span>
+        </h1>
+        <div class="hero__meta">
+          {% if plan.planned_lat is not none and plan.planned_lon is not none %}
+          <span class="chip chip--coord">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+            </svg>
+            {{ "%.4f"|format(plan.planned_lat) }}, {{ "%.4f"|format(plan.planned_lon) }}
+          </span>
+          {% endif %}
+          {% if plan.notes %}
+          <span class="chip">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M4 5h16M4 12h10M4 19h16"/>
+            </svg>
+            {{ plan.notes }}
+          </span>
+          {% endif %}
+        </div>
+        <div class="hero__edit">
+          <a href="{{ url_for('plan') }}" class="btn btn--secondary btn--sm">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M3 13l3-1 7-7-2-2-7 7-1 3z"/>
+            </svg>
+            Edit plan
+          </a>
+        </div>
+      </div>
+
+      <aside class="hero__gauge" aria-label="Most recent check-in match">
+        {% if last_checkin and last_checkin.match_score is not none %}
+          {% set raw = last_checkin.match_score %}
+          {% set pct = (raw * 100 + 0.5) | int %}
+          {% if pct >= 80 %}{% set tone = 'high' %}
+          {% elif pct >= 50 %}{% set tone = 'mid' %}
+          {% else %}{% set tone = 'low' %}{% endif %}
+          {% set score = pct / 100.0 %}
+          {% set value_dash = 197.92 * score %}
+          <svg class="gauge gauge--{{ tone }}" width="112" height="112" viewBox="-4 -4 108 108"
+               role="img" aria-label="Match score {{ pct }} percent — {% if tone == 'high' %}high{% elif tone == 'mid' %}mid{% else %}low{% endif %}">
+            <circle class="gauge__track" cx="50" cy="50" r="42" fill="none" stroke-width="8"
+                    stroke-linecap="round"
+                    stroke-dasharray="197.92 263.89"
+                    transform="rotate(135 50 50)"/>
+            <circle class="gauge__value" cx="50" cy="50" r="42" fill="none" stroke-width="8"
+                    stroke-linecap="round"
+                    stroke-dasharray="{{ '%.2f'|format(value_dash) }} 263.89"
+                    transform="rotate(135 50 50)"/>
+            <text class="gauge__num" x="50" y="54" text-anchor="middle" font-size="24">
+              {{ pct }}<tspan class="gauge__pct" font-size="13">%</tspan>
+            </text>
+            <text class="gauge__lbl" x="50" y="72" text-anchor="middle"
+                  font-size="8" letter-spacing="1.4">MATCH</text>
+          </svg>
+          <span class="hero__gauge-label">Last check-in</span>
+          <span class="hero__gauge-time">{{ last_checkin.checkin_time.strftime('%H:%M') }}</span>
+        {% else %}
+          <svg class="gauge" width="112" height="112" viewBox="-4 -4 108 108"
+               role="img" aria-label="Awaiting first check-in today">
+            <circle class="gauge__track" cx="50" cy="50" r="42" fill="none" stroke-width="8"
+                    stroke-linecap="round" stroke-dasharray="197.92 263.89" transform="rotate(135 50 50)"/>
+            <text class="gauge__num" x="50" y="55" text-anchor="middle" font-size="22" fill="#64748B">&mdash;</text>
+            <text class="gauge__lbl" x="50" y="72" text-anchor="middle"
+                  font-size="8" letter-spacing="1.4">AWAITING</text>
+          </svg>
+          <span class="hero__gauge-label">No check-in yet</span>
+          <span class="hero__gauge-time muted">Hit "Check in now" when you arrive</span>
+        {% endif %}
+      </aside>
+    </div>
+  </section>
+
+  {# Awaiting banner when plan exists but no check-ins yet #}
+  {% if not last_checkin %}
+    <div class="flash flash--info" role="status" style="margin-top: 24px;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="10"/><path d="M12 8v5"/><circle cx="12" cy="16" r="0.8" fill="currentColor"/>
+      </svg>
+      <span>Awaiting first check-in today. Hit "Check in now" once you arrive.</span>
+    </div>
+  {% endif %}
+
+  {# ===== v2: Today's visit metrics strip ===== #}
+  {% if today_metrics is defined %}
+  <div class="kpis" style="margin-top: 24px;" aria-label="Today's visit metrics">
+    <div class="card kpi stat-tile">
+      <div class="kpi__label">Visits today</div>
+      <div class="kpi__value num">{{ today_metrics.total }}</div>
+      <div class="kpi__sub">across all account types</div>
+    </div>
+    <div class="card kpi stat-tile">
+      <div class="kpi__label">Doctors</div>
+      <div class="kpi__value num">{{ today_metrics.doctor }}</div>
+    </div>
+    <div class="card kpi stat-tile">
+      <div class="kpi__label">Chemists</div>
+      <div class="kpi__value num">{{ today_metrics.chemist }}</div>
+    </div>
+    <div class="card kpi stat-tile">
+      <div class="kpi__label">Stockists</div>
+      <div class="kpi__value num">{{ today_metrics.stockist }}</div>
+    </div>
+  </div>
+  {% endif %}
+
+  {# ===== v2: Planned today list ===== #}
+  {% if planned_items %}
+  <section class="card" style="margin-top: 24px;" aria-labelledby="plannedTitle">
+    <header class="card__head">
+      <h2 id="plannedTitle" class="card__title">Planned today</h2>
+      <span class="card__sub">{{ planned_items|length }} account{{ '' if planned_items|length == 1 else 's' }}</span>
+    </header>
+    <ul class="account-picker">
+      {% for it in planned_items %}
+      <li class="account-row">
+        <div class="account-row__inner" style="cursor:default;">
+          <span class="account-row__body">
+            <span class="account-row__name">
+              {{ it.account_name }}
+              {% if it.visited %}<span class="badge badge--matched" style="margin-left:8px;">Visited</span>{% endif %}
+            </span>
+            <span class="account-row__meta">
+              <span class="account-type-tag account-type-tag--{{ it.account_type }}">{{ it.account_type|capitalize }}</span>
+              {% if it.account_specialty %}<span class="muted">{{ it.account_specialty }}</span>{% endif %}
+              {% if it.district_name %}<span class="muted">&middot; {{ it.district_name }}</span>{% endif %}
+            </span>
+            {% if it.account_address %}
+            <span class="cell-place__sub" style="font-family: var(--font-sans);">{{ it.account_address }}</span>
+            {% endif %}
+          </span>
+          <a class="btn btn--secondary btn--sm" href="{{ url_for('visit') }}?account_id={{ it.account_id }}">
+            Log visit
+          </a>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
+  {# ===== v2: Period tabs widget ===== #}
+  {% if period_stats is defined %}
+  <section class="card" style="margin-top: 24px;" aria-labelledby="periodTabsTitle">
+    <header class="card__head">
+      <h2 id="periodTabsTitle" class="card__title">Visit counts</h2>
+      <a class="btn btn--ghost btn--sm" href="{{ url_for('reports') }}">View reports</a>
+    </header>
+    <div class="tabs" role="tablist" aria-label="Period">
+      {% for p in ['day','week','month','quarter'] %}
+        <a class="tabs__item {% if active_period == p %}tabs__item--active{% endif %}"
+           href="{{ url_for('dashboard', period=p) }}"
+           role="tab" aria-selected="{{ 'true' if active_period == p else 'false' }}">
+          {{ {'day':'Day','week':'Week','month':'Month','quarter':'Quarter'}[p] }}
+        </a>
+      {% endfor %}
+    </div>
+    {% set ps = period_stats %}
+    <div class="period-summary" style="margin-top: 16px;">
+      <div>
+        <span class="eyebrow eyebrow--muted">Total visits ({{ ps['from'] }} → {{ ps['to'] }})</span>
+        <div class="period-summary__num num">{{ ps.counts.total }}</div>
+      </div>
+      <div class="period-summary__delta">
+        D {{ ps.counts.doctor }} &middot; C {{ ps.counts.chemist }} &middot; S {{ ps.counts.stockist }}
+        {% if ps.target %} &middot; target {{ ps.target.target_count }}{% endif %}
+        {% if ps.achievement_pct is not none %} &middot; {{ '%.0f'|format(ps.achievement_pct) }}%{% endif %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  {# ===== KPI strip (Branch 3 only) ===== #}
+  {% if last_checkin and history %}
+    {% set ci_count = history|length %}
+    {% set match_sum = namespace(v=0) %}
+    {% set match_n = namespace(v=0) %}
+    {% set dist_sum = namespace(v=0) %}
+    {% set dist_n = namespace(v=0) %}
+    {% for h in history %}
+      {% if h.match_score is not none %}
+        {% set match_sum.v = match_sum.v + h.match_score %}
+        {% set match_n.v = match_n.v + 1 %}
+      {% endif %}
+      {% if h.distance_km is not none %}
+        {% set dist_sum.v = dist_sum.v + h.distance_km %}
+        {% set dist_n.v = dist_n.v + 1 %}
+      {% endif %}
+    {% endfor %}
+    {% set avg_match = (match_sum.v / match_n.v) if match_n.v > 0 else 0 %}
+    {% set avg_distance = (dist_sum.v / dist_n.v) if dist_n.v > 0 else 0 %}
+    {% set avg_match_pct = (avg_match * 100 + 0.5) | int %}
+
+    {% if avg_match_pct >= 80 %}{% set m_tone = 'kpi__value--success' %}
+    {% elif avg_match_pct >= 50 %}{% set m_tone = 'kpi__value--warning' %}
+    {% else %}{% set m_tone = 'kpi__value--danger' %}{% endif %}
+
+    {% if avg_distance <= 0.5 %}{% set d_tone = 'kpi__value--success' %}
+    {% elif avg_distance <= 2 %}{% set d_tone = 'kpi__value--warning' %}
+    {% else %}{% set d_tone = 'kpi__value--danger' %}{% endif %}
+
+    {% set flag_count = flags|length if flags else 0 %}
+    {% if flag_count == 0 %}{% set a_tone = 'kpi__value--success' %}
+    {% elif flag_count < 3 %}{% set a_tone = 'kpi__value--warning' %}
+    {% else %}{% set a_tone = 'kpi__value--danger' %}{% endif %}
+
+    <div class="kpis">
+      <div class="card kpi">
+        <div class="kpi__label">Check-ins today</div>
+        <div class="kpi__value num">{{ ci_count }}</div>
+        <div class="kpi__sub">recorded so far</div>
+      </div>
+
+      <div class="card kpi">
+        <div class="kpi__label">Avg match score</div>
+        <div class="kpi__value num {{ m_tone }}"
+             aria-label="Average match score {{ avg_match_pct }} percent">
+          {{ avg_match_pct }}<span class="unit">%</span>
+        </div>
+        <div class="kpi__sub">across today</div>
+      </div>
+
+      <div class="card kpi">
+        <div class="kpi__label">Avg distance</div>
+        <div class="kpi__value num {{ d_tone }}"
+             aria-label="Average distance {{ '%.2f'|format(avg_distance) }} kilometres">
+          {{ "%.2f"|format(avg_distance) }}<span class="unit">km</span>
+        </div>
+        <div class="kpi__sub">from planned location</div>
+      </div>
+
+      <div class="card kpi">
+        <div class="kpi__label">Open anomalies</div>
+        <div class="kpi__value num {{ a_tone }}"
+             aria-label="{{ flag_count }} open {{ 'anomaly' if flag_count == 1 else 'anomalies' }}{% if flag_count %} — requires review{% endif %}">
+          {% if flag_count > 0 %}
+            <svg class="kpi__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 3 L22 20 H2 Z"/><path d="M12 10v4"/><circle cx="12" cy="17" r="0.8" fill="currentColor"/>
+            </svg>
+          {% endif %}
+          <span>{{ flag_count }}</span>
+        </div>
+        <div class="kpi__sub">last 24 hours</div>
+      </div>
+    </div>
+  {% endif %}
+
+  {# ===== Check-in form ===== #}
+  <section class="card form-card" id="checkin" style="margin-top: 24px;">
+    <h2 class="card__title">New check-in</h2>
+    <p class="muted" style="margin-top: 4px; margin-bottom: 24px;">Record where you actually are so we can score the match against your plan.</p>
+
+    <form method="post" action="{{ url_for('checkin') }}" novalidate>
+      <div class="field">
+        <span class="field-label">Source</span>
+        <div class="segmented" role="radiogroup" aria-label="Check-in source">
+          <input type="radio" id="src-manual" name="source" value="manual" checked onchange="toggleSource()">
+          <label for="src-manual">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M3 13l3-1 7-7-2-2-7 7-1 3z"/>
+            </svg>
+            Manual
+          </label>
+          <input type="radio" id="src-gps" name="source" value="gps" onchange="toggleSource()">
+          <label for="src-gps">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="8" cy="8" r="2"/><circle cx="8" cy="8" r="6"/>
+              <path d="M8 1v2M8 13v2M1 8h2M13 8h2"/>
+            </svg>
+            GPS
+          </label>
+        </div>
+      </div>
+
+      <div id="manual-fields">
+        <div class="field">
+          <label for="actual_place_name">Where are you now?</label>
+          <input id="actual_place_name" type="text" name="actual_place_name"
+                 placeholder="e.g. Janpath, New Delhi">
+          <small class="field__help">A landmark, building, or address &mdash; we'll fuzzy-match against your plan.</small>
+        </div>
+      </div>
+
+      <div id="gps-fields" style="display:none">
+        <div class="grid-2">
+          <div class="field field--mono">
+            <label for="lat">Latitude</label>
+            <input id="lat" type="text" name="lat" inputmode="decimal" placeholder="12.9716">
+          </div>
+          <div class="field field--mono">
+            <label for="lon">Longitude</label>
+            <input id="lon" type="text" name="lon" inputmode="decimal" placeholder="77.5946">
+          </div>
+        </div>
+        <div class="field">
+          <button type="button" class="btn btn--secondary" onclick="useMyLocation()">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M8 14s-5-5.5-5-8.5a5 5 0 1 1 10 0c0 3-5 8.5-5 8.5z"/>
+              <circle cx="8" cy="5.5" r="1.8"/>
+            </svg>
+            Use my current location
+          </button>
+        </div>
+      </div>
+
+      <div class="form-card__footer">
+        <button type="submit" class="btn btn--primary btn--lg">
+          Check in now
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M3 8h10M9 4l4 4-4 4"/>
+          </svg>
+        </button>
+      </div>
+    </form>
+  </section>
+
+{% else %}
+  {# ===== No plan declared yet ===== #}
+  <section class="card card--focal">
+    <div class="empty">
+      <svg class="empty__art" viewBox="0 0 120 120" fill="none" stroke="currentColor" aria-hidden="true">
+        <rect class="em-fill-soft" x="22" y="28" width="64" height="76" rx="8" stroke="currentColor" stroke-width="1.5"/>
+        <rect class="em-fill-white" x="40" y="22" width="28" height="10" rx="3" stroke="currentColor" stroke-width="1.5"/>
+        <line x1="32" y1="50" x2="76" y2="50" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
+        <line x1="32" y1="62" x2="68" y2="62" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
+        <line x1="32" y1="74" x2="62" y2="74" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
+        <path d="M88 38 c-6 0 -10 4 -10 10 0 7 10 18 10 18 s10 -11 10 -18 c0 -6 -4 -10 -10 -10 z"
+              class="em-fill-white" stroke-width="1.5" stroke-dasharray="3 2"/>
+        <circle cx="88" cy="48" r="3" class="em-accent" fill="currentColor" stroke="none"/>
+      </svg>
+      <div class="empty__title">No plan declared yet</div>
+      <div class="empty__body">Declare where you'll be today so your check-ins can be scored against the plan.</div>
+      <a class="btn btn--primary" href="{{ url_for('plan') }}">Declare today's plan</a>
+    </div>
+  </section>
+{% endif %}
+
+{# ===== Recent check-ins + anomalies in 2-column dashboard grid (Branch 3) ===== #}
+{% set use_dashboard_grid = (history and flags) %}
+{% if use_dashboard_grid %}
+<div class="dashboard-grid" style="margin-top: 24px;">
+{% endif %}
+
+{# ===== Recent check-ins table ===== #}
+{% if history %}
+<section class="card datatable" aria-labelledby="recentTitle"{% if not use_dashboard_grid %} style="margin-top: 24px;"{% endif %}>
+  <header class="datatable__head">
+    <h2 id="recentTitle" class="card__title">Recent check-ins</h2>
+    <span class="card__sub">Last {{ history|length }}</span>
+  </header>
+  <table>
+    <thead>
+      <tr>
+        <th>Status</th>
+        <th>Place</th>
+        <th>Source</th>
+        <th>Distance (km)</th>
+        <th>Time</th>
+        <th class="r">Flag</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for h in history %}
+        {% set raw = h.match_score if h.match_score is not none else 0 %}
+        {% set pct = (raw * 100 + 0.5) | int %}
+        {% if pct >= 80 %}{% set tone = 'high' %}{% set row_tone = 'ok'  %}
+        {% elif pct >= 50 %}{% set tone = 'mid'  %}{% set row_tone = 'mid' %}
+        {% else %}            {% set tone = 'low'  %}{% set row_tone = 'bad' %}{% endif %}
+        {% set score = pct / 100.0 %}
+        {% set value_dash = 197.92 * score %}
+        {% set matched_ui = (h.match_score is not none) and (pct >= 80) %}
+
+        {% set d = h.distance_km if h.distance_km is not none else 0 %}
+        {% set fill_pct = (10 - d) * 10 if d < 10 else 0 %}
+        {% if d <= 0.5 %}{% set dcolor = '#10B981' %}{% set dqual = 'near' %}{% set dqualtxt = 'Near' %}
+        {% elif d <= 2 %}{% set dcolor = '#F59E0B' %}{% set dqual = 'mid'  %}{% set dqualtxt = 'Mid' %}
+        {% else %}         {% set dcolor = '#EF4444' %}{% set dqual = 'far'  %}{% set dqualtxt = 'Far' %}{% endif %}
+
+      <tr class="row--{{ row_tone }}">
+        <td data-label="Status">
+          {% if h.match_score is not none %}
+          <span class="score-cell" aria-label="Match score {{ pct }} percent">
+            <svg class="gauge gauge--{{ tone }}" width="36" height="36" viewBox="-4 -4 108 108" aria-hidden="true" focusable="false">
+              <circle class="gauge__track" cx="50" cy="50" r="42" fill="none" stroke-width="10"
+                      stroke-linecap="round" stroke-dasharray="197.92 263.89" transform="rotate(135 50 50)"/>
+              <circle class="gauge__value" cx="50" cy="50" r="42" fill="none" stroke-width="10"
+                      stroke-linecap="round"
+                      stroke-dasharray="{{ '%.2f'|format(value_dash) }} 263.89" transform="rotate(135 50 50)"/>
+            </svg>
+            <span class="num score-cell__num">{{ pct }}<span class="unit">%</span></span>
+            <span class="score-cell__tag score-cell__tag--{{ tone }}" aria-hidden="true">
+              {% if tone == 'high' %}High{% elif tone == 'mid' %}Mid{% else %}Low{% endif %}
+            </span>
+          </span>
+          {% else %}
+          <span class="muted">&mdash;</span>
+          {% endif %}
+        </td>
+        <td data-label="Place">
+          <div class="cell-place__name">{{ h.actual_place_name or '—' }}</div>
+          {% if h.actual_lat is defined and h.actual_lat is not none and h.actual_lon is not none %}
+          <div class="cell-place__sub">{{ "%.4f"|format(h.actual_lat) }}, {{ "%.4f"|format(h.actual_lon) }}</div>
+          {% endif %}
+        </td>
+        <td data-label="Source">
+          {% if h.source == 'gps' %}
+            <span class="badge badge--gps">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="8" cy="8" r="2"/><circle cx="8" cy="8" r="6"/>
+                <path d="M8 1v2M8 13v2M1 8h2M13 8h2"/>
+              </svg>
+              GPS
+            </span>
+          {% else %}
+            <span class="badge badge--manual">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M3 13l3-1 7-7-2-2-7 7-1 3z"/>
+              </svg>
+              Manual
+            </span>
+          {% endif %}
+        </td>
+        <td data-label="Distance">
+          {% if h.distance_km is not none %}
+          <span class="prox" title="Fuller bar means closer to planned location">
+            <svg class="prox__bar" width="120" height="10" viewBox="0 0 120 10"
+                 role="img" aria-label="{{ '%.2f'|format(d) }} kilometres from planned location — {{ dqualtxt }}">
+              <rect class="prox__bar-track" x="0" y="2" width="120" height="6" rx="3"/>
+              <rect x="0" y="2" width="{{ '%.2f'|format(fill_pct * 1.2) }}" height="6" rx="3" fill="{{ dcolor }}"/>
+            </svg>
+            <span class="num"><span class="prox__num">{{ "%.2f"|format(d) }}</span><span class="unit">km</span></span>
+            <span class="prox__qual prox__qual--{{ dqual }}">{{ dqualtxt }}</span>
+          </span>
+          {% else %}
+          <span class="muted">&mdash;</span>
+          {% endif %}
+        </td>
+        <td data-label="Time">
+          <div class="cell-time__rel">{{ h.checkin_time.strftime('%H:%M') }}</div>
+          <div class="cell-time__abs">{{ h.checkin_time.strftime('%Y-%m-%d') }}</div>
+        </td>
+        <td data-label="Flag" class="r">
+          {% if h.match_score is none %}
+            <span class="badge badge--neutral">Pending</span>
+          {% elif matched_ui %}
+            <span class="badge badge--matched">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="8" cy="8" r="7"/><path d="M5 8.5l2 2 4-4.5"/>
+              </svg>
+              Matched
+            </span>
+          {% else %}
+            <span class="badge badge--unmatched">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="8" cy="8" r="7"/><path d="M5.5 5.5l5 5M10.5 5.5l-5 5"/>
+              </svg>
+              Not matched
+            </span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% else %}
+{% if plan %}
+<section class="card" style="margin-top: 24px;">
+  <div class="empty">
+    <svg class="empty__art" viewBox="0 0 120 120" fill="none" stroke="currentColor" aria-hidden="true">
+      <path d="M20 90 Q 40 50 60 70 T 100 30" stroke-width="1.5"
+            stroke-dasharray="4 4" fill="none"/>
+      <circle cx="20" cy="90" r="6" fill="currentColor" stroke="none"/>
+      <circle class="em-accent em-pulse" cx="100" cy="30" r="13" opacity="0.12" fill="currentColor" stroke="none">
+        <animate attributeName="r" values="10;16;10" dur="2.4s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0.18;0.04;0.18" dur="2.4s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="100" cy="30" r="5" class="em-accent" fill="currentColor" stroke="none"/>
+    </svg>
+    <div class="empty__title">No check-ins yet today</div>
+    <div class="empty__body">Hit "Check in now" once you arrive &mdash; we'll score the match for you.</div>
+  </div>
+</section>
+{% endif %}
+{% endif %}
+
+{# ===== Anomaly flags ===== #}
+{% if flags %}
+<section class="card" aria-labelledby="anomaliesTitle"{% if not use_dashboard_grid %} style="margin-top: 24px;"{% endif %}>
+  <header class="card__head">
+    <h2 id="anomaliesTitle" class="card__title">Recent anomaly flags</h2>
+    <span class="card__sub">Requires review</span>
+  </header>
+  <div class="anomaly-list" aria-live="polite">
+    {% for f in flags %}
+    <div class="anomaly-row" role="group" aria-label="Anomaly at {{ f.actual_place_name or 'unknown location' }}: {{ f.reason }}">
+      <span class="anomaly-row__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3 L22 20 H2 Z"/><path d="M12 10v4"/><circle cx="12" cy="17" r="0.8" fill="currentColor"/>
+        </svg>
+      </span>
+      <div>
+        <div class="anomaly-row__reason">{{ f.actual_place_name or '—' }}</div>
+        <div class="anomaly-row__meta">{{ f.reason }}</div>
+      </div>
+      <div>
+        <span class="badge badge--anomaly" role="status">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M8 2 L14.5 13.5 H1.5 Z"/><path d="M8 6.5v3.5"/><circle cx="8" cy="12" r="0.6" fill="currentColor"/>
+          </svg>
+          Anomaly
+          <span class="sr-only">Requires review</span>
+        </span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% if use_dashboard_grid %}
+</div>
+{% endif %}
+
+<script>
+function toggleSource() {
+  const gpsRadio = document.getElementById('src-gps');
+  const isGps = gpsRadio && gpsRadio.checked;
+  const m = document.getElementById('manual-fields');
+  const g = document.getElementById('gps-fields');
+  if (m) m.style.display = isGps ? 'none' : '';
+  if (g) g.style.display = isGps ? '' : 'none';
+}
+function useMyLocation() {
+  if (!navigator.geolocation) { alert('Geolocation not supported'); return; }
+  navigator.geolocation.getCurrentPosition(p => {
+    document.getElementById('lat').value = p.coords.latitude.toFixed(6);
+    document.getElementById('lon').value = p.coords.longitude.toFixed(6);
+  }, e => alert('Could not get location: ' + e.message));
+}
+</script>
+{% endblock %}

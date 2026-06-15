@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}{% if existing %}Edit account{% else %}Add account{% endif %} &middot; Bishwa Medicare Pvt Ltd{% endblock %}
+{% block content %}
+  {% set active_menu = "accounts" %}
+  {% include "_menubar.html" %}
+<form method="post" class="card form-card" novalidate>
+  <span class="eyebrow eyebrow--muted">{% if existing %}Edit{% else %}New{% endif %}</span>
+  <h1>{% if existing %}Edit account{% else %}Add an account{% endif %}</h1>
+  <p class="muted">Doctors, chemists, and stockists are the entities your team visits.</p>
+
+  <div class="field">
+    <label for="name">
+      Name
+      <span class="req" aria-hidden="true">*</span>
+      <span class="req-text">(required)</span>
+    </label>
+    <input id="name" type="text" name="name" required
+           value="{{ existing.name if existing else '' }}"
+           placeholder="e.g. Dr. Aman Verma">
+  </div>
+
+  <div class="grid-2">
+    <div class="field">
+      <label for="type">
+        Type
+        <span class="req" aria-hidden="true">*</span>
+        <span class="req-text">(required)</span>
+      </label>
+      <select id="type" name="type" required>
+        {% set sel = existing.type if existing else '' %}
+        <option value="doctor"   {% if sel == 'doctor' %}selected{% endif %}>Doctor</option>
+        <option value="chemist"  {% if sel == 'chemist' %}selected{% endif %}>Chemist</option>
+        <option value="stockist" {% if sel == 'stockist' %}selected{% endif %}>Stockist</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="specialty">Specialty <span class="req-text">(optional)</span></label>
+      <input id="specialty" type="text" name="specialty"
+             value="{{ existing.specialty if existing and existing.specialty else '' }}"
+             placeholder="e.g. Cardiology">
+    </div>
+  </div>
+
+  <div class="field">
+    <label for="district_id">District</label>
+    <select id="district_id" name="district_id">
+      <option value="">(unassigned)</option>
+      {% for d in districts %}
+        <option value="{{ d.id }}"
+          {% if existing and existing.district_id == d.id %}selected{% endif %}>
+          {{ d.region_name }} &middot; {{ d.name }}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="field">
+    <label for="address">Address</label>
+    <textarea id="address" name="address" rows="2"
+              placeholder="Street, locality, city">{{ existing.address if existing and existing.address else '' }}</textarea>
+  </div>
+
+  <div class="grid-2">
+    <div class="field">
+      <label for="phone">Phone</label>
+      <input id="phone" type="text" name="phone"
+             value="{{ existing.phone if existing and existing.phone else '' }}"
+             placeholder="+91 ...">
+    </div>
+    <div class="field">
+      <label for="email">Email</label>
+      <input id="email" type="email" name="email"
+             value="{{ existing.email if existing and existing.email else '' }}"
+             placeholder="contact@example.com">
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="field field--mono">
+      <label for="lat">Latitude</label>
+      <input id="lat" type="text" name="lat" inputmode="decimal"
+             value="{{ existing.lat if existing and existing.lat is not none else '' }}"
+             placeholder="12.9716">
+      <small class="field__help">Decimal degrees</small>
+    </div>
+    <div class="field field--mono">
+      <label for="lon">Longitude</label>
+      <input id="lon" type="text" name="lon" inputmode="decimal"
+             value="{{ existing.lon if existing and existing.lon is not none else '' }}"
+             placeholder="77.5946">
+      <small class="field__help">Decimal degrees</small>
+    </div>
+  </div>
+
+  <div class="form-card__footer">
+    <a href="{{ url_for('accounts_list') }}" class="btn btn--secondary">Cancel</a>
+    <button type="submit" class="btn btn--primary">
+      {% if existing %}Save changes{% else %}Create account{% endif %}
+    </button>
+  </div>
+</form>
+{% endblock %}

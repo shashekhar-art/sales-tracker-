@@ -1,0 +1,11 @@
+'use sales tracker':
+  title: 'Use sales tracker (employee)'
+  description: 'Allows the user to declare plans and check in.'
+'administer sales tracker':
+  title: 'Administer sales tracker'
+  description: 'View admin dashboard, anomaly flags, manage accounts and targets, and configure the API endpoint.'
+  restrict access: true
+'view sales tracker proctor':
+  title: 'View sales tracker proctor'
+  description: 'View the proctor (national) dashboard.'
+  restrict access: true

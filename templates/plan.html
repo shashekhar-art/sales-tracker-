@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% block title %}Plan Today &middot; Bishwa Medicare Pvt Ltd{% endblock %}
+{% block content %}
+  {% set active_menu = "plan" %}
+  {% include "_menubar.html" %}
+<form method="post" class="card form-card" novalidate>
+  <span class="eyebrow eyebrow--muted">Today &middot; {{ today }}</span>
+  <h1>Declare today's plan</h1>
+  <p class="muted">Tell us where you'll be selling today. Coordinates are optional &mdash; tap
+    "Use my current location" to fill them from your device.</p>
+
+  <div class="field">
+    <label for="place">
+      Planned location
+      <span class="req" aria-hidden="true">*</span>
+      <span class="req-text">(required)</span>
+    </label>
+    <input id="place" type="text" name="place" required
+           value="{{ existing.planned_place_name if existing else '' }}"
+           placeholder="e.g. Connaught Place, Delhi">
+    <small class="field__help">The customer site or area you plan to visit.</small>
+  </div>
+
+  <div class="grid-2">
+    <div class="field field--mono">
+      <label for="lat">Latitude</label>
+      <input id="lat" type="text" name="lat" inputmode="decimal"
+             value="{{ existing.planned_lat if existing and existing.planned_lat is not none else '' }}"
+             placeholder="12.9716">
+      <small class="field__help">Decimal degrees, e.g. 12.9716</small>
+    </div>
+    <div class="field field--mono">
+      <label for="lon">Longitude</label>
+      <input id="lon" type="text" name="lon" inputmode="decimal"
+             value="{{ existing.planned_lon if existing and existing.planned_lon is not none else '' }}"
+             placeholder="77.5946">
+      <small class="field__help">Decimal degrees, e.g. 77.5946</small>
+    </div>
+  </div>
+
+  <div class="field">
+    <button type="button" class="btn btn--secondary" onclick="useMyLocation()">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M8 14s-5-5.5-5-8.5a5 5 0 1 1 10 0c0 3-5 8.5-5 8.5z"/>
+        <circle cx="8" cy="5.5" r="1.8"/>
+      </svg>
+      Use my current location
+    </button>
+    <small class="field__help">We'll fill the lat/lon fields above from your device GPS.</small>
+  </div>
+
+  <div class="field">
+    <label for="notes">Notes <span class="req-text">(optional)</span></label>
+    <textarea id="notes" name="notes" rows="2"
+              placeholder="Optional context for your manager">{{ existing.notes if existing and existing.notes else '' }}</textarea>
+  </div>
+
+  {# ============ Multi-account picker (v2) ============ #}
+  <fieldset class="field" style="border:0; padding:0; margin-top: 24px;">
+    <legend class="field-label">Accounts to visit today <span class="req-text">(optional, multi-select)</span></legend>
+
+    <div class="filter-bar" style="margin-top: 8px;">
+      <input class="search-input" type="search" id="acct-search"
+             placeholder="Search account name or specialty" aria-label="Filter accounts"
+             onkeyup="filterAccounts()">
+      <select id="acct-district-filter" class="filter-select" onchange="filterAccounts()" aria-label="Filter by district">
+        <option value="">All districts</option>
+        {% for d in districts %}
+          <option value="{{ d.id }}">{{ d.region_name }} &middot; {{ d.name }}</option>
+        {% endfor %}
+      </select>
+      <div class="filter-chip-group" role="group" aria-label="Filter by type">
+        <button type="button" class="filter-chip filter-chip--active" data-type=""
+                onclick="setTypeFilter(this, '')">All</button>
+        {% for t in ['doctor','chemist','stockist'] %}
+          <button type="button" class="filter-chip" data-type="{{ t }}"
+                  onclick="setTypeFilter(this, '{{ t }}')">{{ t|capitalize }}</button>
+        {% endfor %}
+      </div>
+    </div>
+
+    {# Hidden empty marker so request.form has 'account_ids' even when nothing is checked. #}
+    <input type="hidden" name="account_ids" value="">
+
+    <ul class="account-picker" id="acct-list">
+      {% for a in accounts %}
+      <li class="account-row" data-name="{{ (a.name ~ ' ' ~ (a.specialty or ''))|lower }}"
+          data-type="{{ a.type }}" data-district="{{ a.district_id or '' }}">
+        <label class="account-row__inner">
+          <input type="checkbox" name="account_ids" value="{{ a.id }}"
+                 {% if a.id in selected_ids %}checked{% endif %}>
+          <span class="account-row__body">
+            <span class="account-row__name">{{ a.name }}</span>
+            <span class="account-row__meta">
+              <span class="account-type-tag account-type-tag--{{ a.type }}">{{ a.type|capitalize }}</span>
+              {% if a.specialty %}<span class="muted">{{ a.specialty }}</span>{% endif %}
+              {% if a.district_name %}<span class="muted">&middot; {{ a.district_name }}</span>{% endif %}
+            </span>
+          </span>
+        </label>
+      </li>
+      {% else %}
+      <li class="account-row muted" style="padding: 12px;">
+        No accounts yet — <a href="{{ url_for('accounts_add') }}">add one</a>.
+      </li>
+      {% endfor %}
+    </ul>
+    <small class="field__help">These accounts will appear on your dashboard's "planned today" list. You can still log visits to any account, not just the planned ones.</small>
+  </fieldset>
+
+  <div class="form-card__footer">
+    <a href="{{ url_for('dashboard') }}" class="btn btn--secondary">Cancel</a>
+    <button type="submit" class="btn btn--primary">Save plan</button>
+  </div>
+</form>
+
+<script>
+function useMyLocation() {
+  if (!navigator.geolocation) { alert('Geolocation not supported'); return; }
+  navigator.geolocation.getCurrentPosition(p => {
+    document.getElementById('lat').value = p.coords.latitude.toFixed(6);
+    document.getElementById('lon').value = p.coords.longitude.toFixed(6);
+  }, e => alert('Could not get location: ' + e.message));
+}
+
+let _activeType = '';
+function setTypeFilter(btn, t) {
+  _activeType = t;
+  document.querySelectorAll('.filter-chip[data-type]').forEach(c =>
+    c.classList.toggle('filter-chip--active', c.dataset.type === t));
+  filterAccounts();
+}
+function filterAccounts() {
+  const q = (document.getElementById('acct-search').value || '').toLowerCase().trim();
+  const dist = document.getElementById('acct-district-filter').value;
+  document.querySelectorAll('#acct-list .account-row').forEach(row => {
+    if (!row.dataset || !row.dataset.name) return; // skip the empty-state row
+    const matchQ = !q || row.dataset.name.indexOf(q) >= 0;
+    const matchT = !_activeType || row.dataset.type === _activeType;
+    const matchD = !dist || row.dataset.district === dist;
+    row.style.display = (matchQ && matchT && matchD) ? '' : 'none';
+  });
+}
+</script>
+{% endblock %}

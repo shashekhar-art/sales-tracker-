@@ -1,0 +1,9 @@
+name: 'Sales Tracker'
+type: module
+description: 'Frontend for the Sales Employee Tracking System. Calls the Python Flask API for plan/check-in/AI matching/anomaly detection.'
+package: 'Sales Tracker'
+core_version_requirement: ^10 || ^11
+configure: sales_tracker.settings
+dependencies:
+  - drupal:user
+  - drupal:system
