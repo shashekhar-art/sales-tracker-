@@ -89,6 +89,44 @@ def logout():
     return redirect(url_for("login"))
 
 
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if "user_id" in session:
+        return redirect(url_for("dashboard"))
+    form = {"name": "", "email": ""}
+    if request.method == "POST":
+        name = (request.form.get("name") or "").strip()
+        login = (request.form.get("email") or "").strip().lower()
+        password = request.form.get("password") or ""
+        confirm = request.form.get("confirm") or ""
+        form["name"], form["email"] = name, login
+        if not name or not login or not password:
+            flash("Name, username, and password are required.", "error")
+        elif len(password) < 6:
+            flash("Password must be at least 6 characters.", "error")
+        elif password != confirm:
+            flash("Passwords do not match.", "error")
+        else:
+            existing, _ = query("SELECT id FROM employees WHERE email=%s", (login,))
+            if existing:
+                flash("That username or email is already taken.", "error")
+            else:
+                pw_hash = generate_password_hash(password, method="pbkdf2:sha256")
+                query(
+                    "INSERT INTO employees (name, email, password_hash, role) VALUES (%s, %s, %s, 'employee')",
+                    (name, login, pw_hash),
+                    fetch=False, commit=True,
+                )
+                rows, _ = query("SELECT id, name, role FROM employees WHERE email=%s", (login,))
+                u = rows[0]
+                session["user_id"] = u["id"]
+                session["name"] = u["name"]
+                session["role"] = u["role"]
+                flash("Welcome aboard! Your account is ready.", "ok")
+                return redirect(url_for("dashboard"))
+    return render_template("register.html", form=form)
+
+
 @app.route("/api/reverse_geocode")
 @login_required
 def api_reverse_geocode():
