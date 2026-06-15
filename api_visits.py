@@ -119,13 +119,14 @@ def log_visit(employee_id, data):
 
     matched = 1 if (match_score is not None and match_score >= config.MATCH_THRESHOLD) else 0
     now = datetime.now()
+    selfie_path = data.get("selfie_path") or None
     _, checkin_id = query(
         """
         INSERT INTO checkins
           (employee_id, plan_id, checkin_time, source, actual_place_name,
            actual_lat, actual_lon, distance_km, text_similarity, match_score,
-           matched, account_id, outcome, visit_notes)
-        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+           matched, account_id, outcome, visit_notes, selfie_path)
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
         """,
         (
             employee_id, plan_row["id"], now, source, actual_name,
@@ -137,6 +138,7 @@ def log_visit(employee_id, data):
             int(account_id),
             outcome,
             visit_notes,
+            selfie_path,
         ),
         fetch=False, commit=True,
     )
@@ -155,7 +157,7 @@ def fetch_visits(employee_id, from_date=None, to_date=None, account_type=None,
                  account_id=None, outcome=None, limit=200):
     sql = (
         "SELECT c.id, c.checkin_time, c.source, c.actual_place_name, c.actual_lat, c.actual_lon, "
-        "       c.distance_km, c.match_score, c.matched, c.outcome, c.visit_notes, "
+        "       c.distance_km, c.match_score, c.matched, c.outcome, c.visit_notes, c.selfie_path, "
         "       a.id AS account_id, a.name AS account_name, a.type AS account_type, "
         "       a.specialty AS account_specialty, a.address AS account_address, "
         "       d.name AS district_name "

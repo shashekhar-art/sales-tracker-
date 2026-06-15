@@ -83,6 +83,27 @@ def login():
     return render_template("login.html")
 
 
+def _save_selfie(employee_id):
+    """Save an uploaded visit selfie to static/uploads/selfies/{employee_id}/
+    and return its path relative to the app root (e.g. 'uploads/selfies/7/1734-...jpg').
+    Returns None when no usable file was uploaded.
+    """
+    import os
+    from werkzeug.utils import secure_filename
+    f = request.files.get("selfie")
+    if not f or not f.filename:
+        return None
+    # Accept jpeg/png only; webcam captures arrive as image/jpeg blobs.
+    ext = (os.path.splitext(f.filename)[1] or ".jpg").lower()
+    if ext not in (".jpg", ".jpeg", ".png", ".webp"):
+        ext = ".jpg"
+    folder_abs = os.path.join(app.static_folder, "uploads", "selfies", str(employee_id))
+    os.makedirs(folder_abs, exist_ok=True)
+    fname = secure_filename(datetime.now().strftime("%Y%m%d-%H%M%S-%f") + ext)
+    f.save(os.path.join(folder_abs, fname))
+    return f"uploads/selfies/{employee_id}/{fname}"
+
+
 @app.route("/logout")
 def logout():
     session.clear()
@@ -545,6 +566,7 @@ def visit():
     from api_visits import fetch_today_planned_items, log_visit, fetch_today_visits
     from api_accounts import fetch_accounts
     if request.method == "POST":
+        selfie_path = _save_selfie(session["user_id"]) if "selfie" in request.files else None
         data = {
             "account_id": request.form.get("account_id"),
             "source": request.form.get("source", "manual"),
@@ -553,6 +575,7 @@ def visit():
             "actual_place_name": request.form.get("actual_place_name"),
             "outcome": request.form.get("outcome") or None,
             "visit_notes": request.form.get("visit_notes") or None,
+            "selfie_path": selfie_path,
         }
         try:
             result = log_visit(session["user_id"], data)

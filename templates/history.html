@@ -24,6 +24,7 @@
         <th>Planned</th>
         <th>Actual</th>
         <th>Distance (km)</th>
+        <th>Selfie</th>
         <th class="r">Match</th>
       </tr>
     </thead>
@@ -109,6 +110,13 @@
           {% else %}
           <span class="muted">&mdash;</span>
           {% endif %}
+        </td>
+        <td data-label="Selfie" class="history-selfie">
+          {% if r.selfie_path %}
+            <a href="{{ url_for('static', filename=r.selfie_path) }}" target="_blank" rel="noopener">
+              <img src="{{ url_for('static', filename=r.selfie_path) }}" alt="Visit selfie">
+            </a>
+          {% else %}<span class="muted">—</span>{% endif %}
         </td>
         <td data-label="Match" class="r">
           {% if r.match_score is none %}
