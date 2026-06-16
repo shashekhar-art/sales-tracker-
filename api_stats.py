@@ -115,7 +115,7 @@ def fetch_target(employee_id, period_type, on_date=None):
             OR (scope='region'   AND region_id=(SELECT region_id FROM employees WHERE id=%s))
             OR (scope='company')
           )
-        ORDER BY FIELD(scope, 'employee','district','region','company'), effective_from DESC
+        ORDER BY CASE scope WHEN 'employee' THEN 1 WHEN 'district' THEN 2 WHEN 'region' THEN 3 ELSE 4 END, effective_from DESC
         LIMIT 1
         """,
         (period_type, on_date, on_date, employee_id, employee_id, employee_id),
