@@ -20,10 +20,11 @@
     <thead>
       <tr>
         <th>Status</th>
-        <th>Plan date</th>
+        <th>Entry / Exit</th>
         <th>Planned</th>
         <th>Actual</th>
-        <th>Distance (km)</th>
+        <th>To plan (km)</th>
+        <th>From login</th>
         <th>Selfie</th>
         <th class="r">Match</th>
       </tr>
@@ -65,9 +66,14 @@
           <span class="muted">&mdash;</span>
           {% endif %}
         </td>
-        <td data-label="Plan date">
-          <div class="cell-time__rel">{{ r.plan_date }}</div>
-          <div class="cell-time__abs">{{ r.checkin_time.strftime('%H:%M') }}</div>
+        <td data-label="Entry / Exit">
+          <div class="cell-time__abs" style="margin-bottom:2px;">{{ r.plan_date }}</div>
+          <div class="cell-time__rel">
+            In: <strong>{% if r.checkin_time %}{{ r.checkin_time.strftime('%H:%M') }}{% else %}—{% endif %}</strong>
+          </div>
+          <div class="cell-time__abs">
+            Out: {% if r.checkout_time %}<strong>{{ r.checkout_time.strftime('%H:%M') }}</strong>{% else %}<span class="muted">—</span>{% endif %}
+          </div>
         </td>
         <td data-label="Planned">
           <div class="cell-place__name">{{ r.planned_place_name or '—' }}</div>
@@ -109,6 +115,13 @@
           </span>
           {% else %}
           <span class="muted">&mdash;</span>
+          {% endif %}
+        </td>
+        <td data-label="From login">
+          {% if r.dist_from_login_km is not none %}
+            <span class="num">{{ "%.2f"|format(r.dist_from_login_km) }}<span class="unit">km</span></span>
+          {% else %}
+            <span class="muted">—</span>
           {% endif %}
         </td>
         <td data-label="Selfie" class="history-selfie">

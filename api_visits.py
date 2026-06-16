@@ -156,7 +156,7 @@ def log_visit(employee_id, data):
 def fetch_visits(employee_id, from_date=None, to_date=None, account_type=None,
                  account_id=None, outcome=None, limit=200):
     sql = (
-        "SELECT c.id, c.checkin_time, c.source, c.actual_place_name, c.actual_lat, c.actual_lon, "
+        "SELECT c.id, c.checkin_time, c.checkout_time, c.source, c.actual_place_name, c.actual_lat, c.actual_lon, "
         "       c.distance_km, c.match_score, c.matched, c.outcome, c.visit_notes, c.selfie_path, "
         "       a.id AS account_id, a.name AS account_name, a.type AS account_type, "
         "       a.specialty AS account_specialty, a.address AS account_address, "

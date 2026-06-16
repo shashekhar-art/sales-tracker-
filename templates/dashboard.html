@@ -543,6 +543,22 @@
 {% endif %}
 
 <script>
+/* Silently capture login location once per page load */
+(function () {
+  if (!navigator.geolocation || !window.isSecureContext) return;
+  navigator.geolocation.getCurrentPosition(
+    function (p) {
+      fetch('/api/set_login_location', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lat: p.coords.latitude, lon: p.coords.longitude }),
+      }).catch(function () {});
+    },
+    null,
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+  );
+})();
+
 async function useMyLocation() {
   const status = document.getElementById('useloc-status');
   const btn = document.getElementById('useloc-btn');

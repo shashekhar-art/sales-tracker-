@@ -16,17 +16,19 @@ PRAGMA foreign_keys = ON;
 PRAGMA journal_mode = WAL;
 
 CREATE TABLE IF NOT EXISTS employees (
-  id            INTEGER PRIMARY KEY AUTOINCREMENT,
-  name          TEXT NOT NULL,
-  email         TEXT NOT NULL UNIQUE,
-  password_hash TEXT NOT NULL,
-  role          TEXT NOT NULL DEFAULT 'employee',
-  phone         TEXT,
-  territory     TEXT,
-  region_id     INTEGER,
-  district_id   INTEGER,
-  manager_id    INTEGER,
-  created_at    TEXT NOT NULL DEFAULT (datetime('now'))
+  id              INTEGER PRIMARY KEY AUTOINCREMENT,
+  name            TEXT NOT NULL,
+  email           TEXT NOT NULL UNIQUE,
+  password_hash   TEXT NOT NULL,
+  role            TEXT NOT NULL DEFAULT 'employee',
+  phone           TEXT,
+  territory       TEXT,
+  region_id       INTEGER,
+  district_id     INTEGER,
+  manager_id      INTEGER,
+  last_login_lat  REAL,
+  last_login_lon  REAL,
+  created_at      TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 CREATE TABLE IF NOT EXISTS regions (
@@ -86,6 +88,7 @@ CREATE TABLE IF NOT EXISTS checkins (
   plan_id            INTEGER REFERENCES planned_visits(id) ON DELETE SET NULL,
   account_id         INTEGER REFERENCES accounts(id) ON DELETE SET NULL,
   checkin_time       TEXT NOT NULL DEFAULT (datetime('now')),
+  checkout_time      TEXT,
   source             TEXT NOT NULL,
   actual_place_name  TEXT,
   actual_lat         REAL,

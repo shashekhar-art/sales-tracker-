@@ -7,10 +7,41 @@ from flask import (
 )
 from werkzeug.security import check_password_hash, generate_password_hash
 
+import os
 import config
 from db import query
 from ai.matcher import match
 from ai.anomaly import score_checkin
+
+# Auto-create database tables and default admin on first run
+if not os.path.exists(config.DB_PATH):
+    from init_db import run as _init_db
+    _init_db()
+    from werkzeug.security import generate_password_hash as _gph
+    query(
+        "INSERT OR IGNORE INTO employees (name, email, password_hash, role) VALUES (?,?,?,'admin')",
+        ("Admin", "admin@example.com", _gph("admin123", method="pbkdf2:sha256")),
+        fetch=False, commit=True,
+    )
+
+# Migrate existing databases: add new columns if they don't exist
+import sqlite3 as _sqlite3
+try:
+    _mc = _sqlite3.connect(config.DB_PATH)
+    for _stmt in [
+        "ALTER TABLE checkins ADD COLUMN checkout_time TEXT",
+        "ALTER TABLE employees ADD COLUMN last_login_lat REAL",
+        "ALTER TABLE employees ADD COLUMN last_login_lon REAL",
+    ]:
+        try:
+            _mc.execute(_stmt)
+            _mc.commit()
+        except _sqlite3.OperationalError:
+            pass
+    _mc.close()
+except Exception:
+    pass
+
 app = Flask(__name__)
 app.secret_key = config.FLASK_SECRET
 
@@ -41,6 +72,54 @@ def proctor_required(f):
             abort(403)
         return f(*args, **kwargs)
     return wrapper
+
+
+def _parse_rows_dt(rows, *fields):
+    """Parse ISO datetime strings to datetime objects in a list of row dicts."""
+    for r in rows or []:
+        for f in fields:
+            v = r.get(f)
+            if v and isinstance(v, str):
+                try:
+                    r[f] = datetime.fromisoformat(v)
+                except ValueError:
+                    pass
+
+
+def _get_login_location():
+    """Return (lat, lon) of the employee's recorded login location."""
+    lat = session.get("login_lat")
+    lon = session.get("login_lon")
+    if lat is not None and lon is not None:
+        return lat, lon
+    rows, _ = query(
+        "SELECT last_login_lat, last_login_lon FROM employees WHERE id=%s",
+        (session["user_id"],),
+    )
+    if rows and rows[0].get("last_login_lat") is not None:
+        lat = rows[0]["last_login_lat"]
+        lon = rows[0]["last_login_lon"]
+        session["login_lat"] = lat
+        session["login_lon"] = lon
+    return lat, lon
+
+
+def _add_login_dist(rows, login_lat, login_lon):
+    """Attach dist_from_login_km to each row dict."""
+    if login_lat is None or login_lon is None:
+        for r in rows or []:
+            r["dist_from_login_km"] = None
+        return
+    from geopy.distance import geodesic as _geo
+    for r in rows or []:
+        rlat, rlon = r.get("actual_lat"), r.get("actual_lon")
+        if rlat is not None and rlon is not None:
+            try:
+                r["dist_from_login_km"] = round(_geo((login_lat, login_lon), (rlat, rlon)).km, 3)
+            except Exception:
+                r["dist_from_login_km"] = None
+        else:
+            r["dist_from_login_km"] = None
 
 
 @app.route("/")
@@ -151,6 +230,46 @@ def api_reverse_geocode():
     return jsonify({"ok": True, "address": address, "lat": lat, "lon": lon})
 
 
+@app.route("/api/set_login_location", methods=["POST"])
+@login_required
+def set_login_location():
+    from flask import jsonify
+    data = request.get_json(silent=True) or {}
+    try:
+        lat = float(data["lat"])
+        lon = float(data["lon"])
+    except (KeyError, TypeError, ValueError):
+        return jsonify({"ok": False, "error": "lat/lon required"}), 400
+    session["login_lat"] = lat
+    session["login_lon"] = lon
+    query(
+        "UPDATE employees SET last_login_lat=%s, last_login_lon=%s WHERE id=%s",
+        (lat, lon, session["user_id"]),
+        fetch=False, commit=True,
+    )
+    return jsonify({"ok": True})
+
+
+@app.route("/checkout/<int:checkin_id>", methods=["POST"])
+@login_required
+def checkout(checkin_id):
+    rows, _ = query(
+        "SELECT id, checkout_time FROM checkins WHERE id=%s AND employee_id=%s",
+        (checkin_id, session["user_id"]),
+    )
+    if not rows:
+        flash("Visit not found.", "error")
+    elif rows[0]["checkout_time"]:
+        flash("Already checked out.", "warn")
+    else:
+        query(
+            "UPDATE checkins SET checkout_time=datetime('now') WHERE id=%s",
+            (checkin_id,), fetch=False, commit=True,
+        )
+        flash("Exit time recorded.", "ok")
+    return redirect(url_for("visit"))
+
+
 @app.route("/plan", methods=["GET", "POST"])
 @login_required
 def plan():
@@ -258,6 +377,7 @@ def dashboard():
         """,
         (session["user_id"],),
     )
+    _parse_rows_dt(history, "checkin_time", "checkout_time")
     flags, _ = query(
         """
         SELECT f.*, c.actual_place_name
@@ -402,6 +522,9 @@ def history():
         """,
         (session["user_id"],),
     )
+    _parse_rows_dt(rows, "checkin_time", "checkout_time")
+    login_lat, login_lon = _get_login_location()
+    _add_login_dist(rows, login_lat, login_lon)
     return render_template("history.html", rows=rows or [])
 
 
@@ -576,6 +699,9 @@ def visit():
 
     planned_items = fetch_today_planned_items(session["user_id"])
     today_visits = fetch_today_visits(session["user_id"])
+    login_lat, login_lon = _get_login_location()
+    _add_login_dist(today_visits, login_lat, login_lon)
+    _parse_rows_dt(today_visits, "checkin_time", "checkout_time")
     all_accounts = fetch_accounts(limit=500)
     return render_template(
         "visit.html",

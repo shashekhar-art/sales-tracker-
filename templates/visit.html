@@ -150,28 +150,47 @@
   <table>
     <thead>
       <tr>
-        <th>Time</th><th>Account</th><th>Type</th><th>Outcome</th><th>Distance (km)</th><th>Selfie</th>
+        <th>Account</th><th>Type</th>
+        <th>Entry</th><th>Exit</th>
+        <th>From login</th>
+        <th>Outcome</th><th>Selfie</th><th></th>
       </tr>
     </thead>
     <tbody>
       {% for v in today_visits %}
       <tr>
-        <td data-label="Time">
-          <div class="visit-row__when">{{ v.checkin_time.strftime('%H:%M') if v.checkin_time else '—' }}</div>
-        </td>
         <td data-label="Account">
           <div class="visit-row__account">{{ v.account_name }}</div>
           <div class="cell-place__sub">{{ v.account_address or '' }}</div>
-          {% if v.lat is defined and v.lat is not none and v.lon is defined and v.lon is not none %}
-            <div class="cell-place__geo">
-              {% with lat = v.lat, lon = v.lon, label = v.account_name %}
-                {% include "_geo.html" %}
-              {% endwith %}
-            </div>
-          {% endif %}
         </td>
         <td data-label="Type">
           <span class="account-type-tag account-type-tag--{{ v.account_type }}">{{ v.account_type|capitalize }}</span>
+        </td>
+        <td data-label="Entry">
+          <div class="visit-row__when">
+            {% if v.checkin_time %}
+              <strong>{{ v.checkin_time.strftime('%H:%M') }}</strong>
+              <div class="cell-time__abs">{{ v.checkin_time.strftime('%d %b') }}</div>
+            {% else %}—{% endif %}
+          </div>
+        </td>
+        <td data-label="Exit">
+          {% if v.checkout_time %}
+            <strong>{{ v.checkout_time.strftime('%H:%M') }}</strong>
+            {% if v.checkin_time %}
+              {% set dur = (v.checkout_time - v.checkin_time).seconds // 60 %}
+              <div class="cell-time__abs">{{ dur }} min</div>
+            {% endif %}
+          {% else %}
+            <span class="muted">—</span>
+          {% endif %}
+        </td>
+        <td data-label="From login">
+          {% if v.dist_from_login_km is not none %}
+            <span class="num">{{ "%.2f"|format(v.dist_from_login_km) }}<span class="unit">km</span></span>
+          {% else %}
+            <span class="muted">—</span>
+          {% endif %}
         </td>
         <td data-label="Outcome">
           {% if v.outcome %}
@@ -180,15 +199,23 @@
             </span>
           {% else %}<span class="muted">—</span>{% endif %}
         </td>
-        <td data-label="Distance">
-          {% if v.distance_km is not none %}{{ "%.2f"|format(v.distance_km) }}<span class="unit">km</span>{% else %}<span class="muted">—</span>{% endif %}
-        </td>
         <td data-label="Selfie" class="visit-row__selfie">
           {% if v.selfie_path %}
             <a href="{{ url_for('static', filename=v.selfie_path) }}" target="_blank" rel="noopener">
               <img src="{{ url_for('static', filename=v.selfie_path) }}" alt="Visit selfie">
             </a>
           {% else %}<span class="muted">—</span>{% endif %}
+        </td>
+        <td data-label="Action">
+          {% if not v.checkout_time %}
+            <form method="post" action="{{ url_for('checkout', checkin_id=v.id) }}" style="margin:0;">
+              <button type="submit" class="btn btn--secondary btn--sm" title="Record exit time">
+                Check out
+              </button>
+            </form>
+          {% else %}
+            <span class="badge badge--matched" style="font-size:11px;">Done</span>
+          {% endif %}
         </td>
       </tr>
       {% endfor %}
