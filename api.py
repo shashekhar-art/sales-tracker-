@@ -139,11 +139,11 @@ def post_plan():
         """
         INSERT INTO planned_visits (employee_id, plan_date, planned_place_name, planned_lat, planned_lon, notes)
         VALUES (%s,%s,%s,%s,%s,%s)
-        ON DUPLICATE KEY UPDATE
-          planned_place_name=VALUES(planned_place_name),
-          planned_lat=VALUES(planned_lat),
-          planned_lon=VALUES(planned_lon),
-          notes=VALUES(notes)
+        ON CONFLICT(employee_id, plan_date) DO UPDATE SET
+          planned_place_name=excluded.planned_place_name,
+          planned_lat=excluded.planned_lat,
+          planned_lon=excluded.planned_lon,
+          notes=excluded.notes
         """,
         (g.employee["id"], date.today(), place,
          float(lat) if lat not in (None, "") else None,
@@ -168,7 +168,7 @@ def post_plan():
             except (TypeError, ValueError):
                 continue
             query(
-                "INSERT IGNORE INTO planned_visit_items (plan_id, account_id, order_idx) VALUES (%s,%s,%s)",
+                "INSERT OR IGNORE INTO planned_visit_items (plan_id, account_id, order_idx) VALUES (%s,%s,%s)",
                 (plan_id, aid_int, idx),
                 fetch=False, commit=True,
             )

@@ -58,7 +58,7 @@ OUTCOMES = ["met", "met", "met", "met", "not_met", "rescheduled"]  # weighted: m
 def _track(table_name, row_id):
     """Track an inserted ID so it can be removed later."""
     query(
-        "INSERT IGNORE INTO _demo_data_ids (table_name, row_id) VALUES (%s, %s)",
+        "INSERT OR IGNORE INTO _demo_data_ids (table_name, row_id) VALUES (%s, %s)",
         (table_name, int(row_id)),
         fetch=False,
         commit=True,

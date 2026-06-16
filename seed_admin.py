@@ -17,7 +17,8 @@ query(
     """
     INSERT INTO employees (name, email, password_hash, role)
     VALUES (%s, %s, %s, 'admin')
-    ON DUPLICATE KEY UPDATE password_hash=VALUES(password_hash), role='admin', name=VALUES(name)
+    ON CONFLICT(email) DO UPDATE SET
+      password_hash=excluded.password_hash, role='admin', name=excluded.name
     """,
     (NAME, EMAIL, pw_hash),
     fetch=False, commit=True,
