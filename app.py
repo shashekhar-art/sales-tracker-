@@ -11,25 +11,8 @@ import config
 from db import query
 from ai.matcher import match
 from ai.anomaly import score_checkin
-from api import api as api_blueprint
-import api_accounts
-import api_visits
-import api_geo
-import api_stats
-import api_proctor
-import api_reports
-import api_targets
-
 app = Flask(__name__)
 app.secret_key = config.FLASK_SECRET
-app.register_blueprint(api_blueprint)
-app.register_blueprint(api_accounts.bp)
-app.register_blueprint(api_visits.bp)
-app.register_blueprint(api_geo.bp)
-app.register_blueprint(api_stats.bp)
-app.register_blueprint(api_proctor.bp)
-app.register_blueprint(api_reports.bp)
-app.register_blueprint(api_targets.bp)
 
 
 def login_required(f):
@@ -150,12 +133,10 @@ def register():
 
 @app.route("/api/reverse_geocode")
 def api_reverse_geocode():
-    """Turn (lat, lon) into a human-readable address. Accepts either Flask
-    session login OR the Drupal X-API-Key header so the Drupal frontend can
-    proxy this call from the browser."""
+    """Turn (lat, lon) into a human-readable address."""
     from ai.matcher import reverse_geocode
     from flask import jsonify
-    if "user_id" not in session and request.headers.get("X-API-Key") != config.API_KEY:
+    if "user_id" not in session:
         return jsonify({"ok": False, "error": "auth required"}), 401
     try:
         lat = float(request.args.get("lat", ""))
@@ -721,5 +702,6 @@ def proctor_employee(eid):
 
 
 if __name__ == "__main__":
-    # Bind to localhost only — the Drupal frontend runs on the same machine via XAMPP.
-    app.run(debug=True, host="127.0.0.1", port=5000)
+    import os
+    port = int(os.environ.get("PORT", 5000))
+    app.run(debug=False, host="0.0.0.0", port=port)

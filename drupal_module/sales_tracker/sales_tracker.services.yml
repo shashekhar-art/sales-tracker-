@@ -1,8 +1,0 @@
-services:
-  sales_tracker.api_client:
-    class: Drupal\sales_tracker\Service\SalesTrackerApiClient
-    arguments:
-      - '@http_client'
-      - '@config.factory'
-      - '@current_user'
-      - '@logger.factory'

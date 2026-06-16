@@ -4,10 +4,8 @@ Every inserted row's primary key is recorded in the `_demo_data_ids` table so
 the whole demo set can be removed later by running `python remove_demo.py`.
 
 Seeds:
-- Drupal users (via drush) so demo employees can log in via the browser
-- Flask `employees` rows (matching emails — auto-provisioning would otherwise
-  happen on first /sales/* call, but we want richer profiles up-front)
-- 7 employees across 7 metros, varied roles
+- Flask `employees` rows with varied roles (employee/proctor/admin)
+- 7 employees across 7 metros
 - A planned_visit for today per employee, with 2-4 planned_visit_items
 - 8-15 check-ins per employee spread across the last 28 days
 - 2 anomaly_flags for spice
@@ -18,7 +16,6 @@ To wipe everything seeded by this script later:
     python remove_demo.py
 """
 import random
-import subprocess
 import sys
 from datetime import date, datetime, timedelta
 
@@ -32,20 +29,16 @@ random.seed(20260615)
 DEMO_PASSWORD = "demo123"
 DEMO_PASSWORD_HASH = generate_password_hash(DEMO_PASSWORD, method="pbkdf2:sha256")
 
-# (display_name, drupal_username, email, role, region_code, district_name, phone, territory)
+# (display_name, email, role, region_code, district_name, phone, territory)
 EMPLOYEES = [
-    ("Priya Sharma",   "demo_priya",   "demo.priya@bishwa.local",   "employee", "MH", "Mumbai",    "+91 98201 11111", "Mumbai West"),
-    ("Arjun Patel",    "demo_arjun",   "demo.arjun@bishwa.local",   "employee", "GJ", "Ahmedabad", "+91 79123 22222", "Ahmedabad Central"),
-    ("Aditi Rao",      "demo_aditi",   "demo.aditi@bishwa.local",   "employee", "KA", "Bengaluru Urban", "+91 80543 33333", "Bengaluru South"),
-    ("Vikram Singh",   "demo_vikram",  "demo.vikram@bishwa.local",  "employee", "DL", "New Delhi", "+91 11234 44444", "Delhi NCR"),
-    ("Anjali Iyer",    "demo_anjali",  "demo.anjali@bishwa.local",  "employee", "TN", "Chennai",   "+91 44765 55555", "Chennai East"),
-    ("Rajesh Kumar",   "demo_rajesh",  "demo.rajesh@bishwa.local",  "proctor",  "TG", "Hyderabad", "+91 40678 66666", "South India Region"),
-    ("Suresh Reddy",   "demo_suresh",  "demo.suresh@bishwa.local",  "admin",    "DL", "New Delhi", "+91 11234 77777", "National Operations"),
+    ("Priya Sharma",   "demo.priya@bishwa.local",   "employee", "MH", "Mumbai",          "+91 98201 11111", "Mumbai West"),
+    ("Arjun Patel",    "demo.arjun@bishwa.local",   "employee", "GJ", "Ahmedabad",        "+91 79123 22222", "Ahmedabad Central"),
+    ("Aditi Rao",      "demo.aditi@bishwa.local",   "employee", "KA", "Bengaluru Urban",  "+91 80543 33333", "Bengaluru South"),
+    ("Vikram Singh",   "demo.vikram@bishwa.local",  "employee", "DL", "New Delhi",        "+91 11234 44444", "Delhi NCR"),
+    ("Anjali Iyer",    "demo.anjali@bishwa.local",  "employee", "TN", "Chennai",          "+91 44765 55555", "Chennai East"),
+    ("Rajesh Kumar",   "demo.rajesh@bishwa.local",  "proctor",  "TG", "Hyderabad",        "+91 40678 66666", "South India Region"),
+    ("Suresh Reddy",   "demo.suresh@bishwa.local",  "admin",    "DL", "New Delhi",        "+91 11234 77777", "National Operations"),
 ]
-
-DRUSH_BIN = r"C:\xampp\php\php.exe"
-DRUSH_PHP = r"C:\Users\shashekhar\drupal-site\vendor\drush\drush\drush.php"
-DRUPAL_ROOT = r"C:\Users\shashekhar\drupal-site"
 
 VISIT_NOTES = [
     "Discussed Q3 portfolio. Promised to review pricing.",
@@ -219,30 +212,6 @@ def insert_anomaly_flag(employee_id, checkin_id, reason, score=None):
     return fid
 
 
-def create_drupal_user(username, email, display_name, password=DEMO_PASSWORD):
-    """Best-effort: create matching Drupal user via drush. Skipped if drush unavailable."""
-    try:
-        # Create the user (idempotent: drush returns error if exists, we ignore).
-        subprocess.run(
-            [DRUSH_BIN, DRUSH_PHP, "--root=" + DRUPAL_ROOT, "user:create", username,
-             "--mail=" + email, "--password=" + password],
-            capture_output=True, timeout=30, text=True,
-        )
-        # Make sure the password is the one we want (re-set in case user exists).
-        subprocess.run(
-            [DRUSH_BIN, DRUSH_PHP, "--root=" + DRUPAL_ROOT, "user:password", username, password],
-            capture_output=True, timeout=30, text=True,
-        )
-        # Unblock in case it was blocked.
-        subprocess.run(
-            [DRUSH_BIN, DRUSH_PHP, "--root=" + DRUPAL_ROOT, "user:unblock", username],
-            capture_output=True, timeout=30, text=True,
-        )
-        print(f"  Drupal user {username} ({display_name}) ready")
-    except Exception as e:
-        print(f"  Drupal user {username} — skipped ({e})")
-
-
 def main():
     print("Seeding demo data for Bishwa Medicare...")
     ensure_tracking_table()
@@ -250,14 +219,13 @@ def main():
     # 1) Employees + matching Drupal users
     employee_records = []
     print("\nCreating sample employees...")
-    for (name, drupal_user, email, role, region_code, district_name, phone, territory) in EMPLOYEES:
+    for (name, email, role, region_code, district_name, phone, territory) in EMPLOYEES:
         try:
             did, rid = resolve_district(region_code, district_name)
         except RuntimeError as e:
             print(f"  SKIP {name}: {e}")
             continue
         eid = insert_employee(name, email, role, did, rid, phone, territory)
-        create_drupal_user(drupal_user, email, name)
         employee_records.append({"id": eid, "name": name, "email": email, "role": role, "district_id": did, "region_id": rid})
         print(f"  {name} ({role}) -> employee_id={eid}, district_id={did}")
 

@@ -2,10 +2,6 @@
 
 Reads the `_demo_data_ids` tracking table, deletes the rows it points at,
 then drops the tracking table itself. Safe to run twice.
-
-Note: Drupal users created by `seed_demo.py` (drush user:create) are NOT
-removed automatically — delete them via Drupal admin if you want them gone:
-    drush user:cancel <username>
 """
 from db import query
 
@@ -65,8 +61,6 @@ def main():
     for table, n in deleted.items():
         print(f"  {table}: {n} row(s)")
     print("Dropped tracking table _demo_data_ids.")
-    print("Note: Drupal user accounts (demo_priya etc.) were NOT touched.")
-    print("      Remove with: drush user:cancel <username>  — if you want them gone.")
 
 
 if __name__ == "__main__":
