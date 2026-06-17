@@ -1709,22 +1709,3 @@ form input[type="submit"]:focus-visible {
     padding: 4px 6px;
   }
 }
-
-/* ============================================================
-   PWA / Safe-area support
-   ============================================================ */
-@supports (padding: env(safe-area-inset-bottom)) {
-  .bottom-nav {
-    padding-bottom: calc(env(safe-area-inset-bottom) + 4px);
-  }
-  .page {
-    padding-bottom: calc(env(safe-area-inset-bottom) + 80px);
-  }
-}
-
-/* Standalone PWA: hide browser chrome remnants */
-@media (display-mode: standalone) {
-  .bottom-nav {
-    border-top: 1px solid var(--c-border);
-  }
-}
