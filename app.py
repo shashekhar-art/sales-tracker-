@@ -3,7 +3,7 @@ from functools import wraps
 
 from flask import (
     Flask, render_template, request, redirect, url_for, session, flash, abort,
-    Response
+    Response, send_from_directory
 )
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -825,6 +825,20 @@ def proctor_employee(eid):
         employee=detail["employee"],
         stats=detail["stats"],
     )
+
+
+@app.route("/sw.js")
+def service_worker():
+    resp = send_from_directory("static", "sw.js")
+    resp.headers["Content-Type"] = "application/javascript"
+    resp.headers["Service-Worker-Allowed"] = "/"
+    resp.headers["Cache-Control"] = "no-cache"
+    return resp
+
+
+@app.route("/offline")
+def offline():
+    return render_template("offline.html")
 
 
 if __name__ == "__main__":

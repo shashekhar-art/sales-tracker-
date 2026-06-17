@@ -3,7 +3,14 @@
 <head>
   <meta charset="utf-8">
   <title>{% block title %}Bishwa Medicare Pvt Ltd{% endblock %}</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#4F46E5">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Bishwa Sales">
+  <link rel="manifest" href="/static/manifest.json">
+  <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
@@ -159,5 +166,60 @@
     {% endif %}
   </nav>
   {% endif %}
+
+  <!-- PWA install banner -->
+  <div id="pwa-banner" style="display:none; position:fixed; bottom:72px; left:12px; right:12px;
+       background:#fff; border:1px solid #C7D2FE; border-radius:14px; padding:14px 16px;
+       box-shadow:0 4px 24px rgba(79,70,229,.18); z-index:9999; align-items:center; gap:12px;">
+    <img src="/static/icons/icon-192.png" width="40" height="40"
+         style="border-radius:10px; flex-shrink:0;" alt="">
+    <div style="flex:1; min-width:0;">
+      <div style="font-weight:600; font-size:.9rem; color:#0F172A;">Install Bishwa Sales</div>
+      <div style="font-size:.78rem; color:#64748B;">Add to home screen for app-like access</div>
+    </div>
+    <button id="pwa-install-btn" style="background:#4F46E5; color:#fff; border:none;
+            border-radius:8px; padding:7px 14px; font-size:.82rem; font-weight:600;
+            cursor:pointer; white-space:nowrap;">Install</button>
+    <button id="pwa-dismiss-btn" aria-label="Dismiss" style="background:none; border:none;
+            padding:4px; cursor:pointer; color:#64748B; font-size:1.1rem; flex-shrink:0;">✕</button>
+  </div>
+
+  <script>
+    // Service worker registration
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js', { scope: '/' })
+        .catch(function(e) { console.warn('SW register failed', e); });
+    }
+
+    // PWA install prompt
+    var _pwaPrompt = null;
+    var _banner = document.getElementById('pwa-banner');
+
+    window.addEventListener('beforeinstallprompt', function(e) {
+      e.preventDefault();
+      _pwaPrompt = e;
+      if (!sessionStorage.getItem('pwa-dismissed')) {
+        _banner.style.display = 'flex';
+      }
+    });
+
+    document.getElementById('pwa-install-btn').addEventListener('click', function() {
+      if (!_pwaPrompt) return;
+      _pwaPrompt.prompt();
+      _pwaPrompt.userChoice.then(function() {
+        _pwaPrompt = null;
+        _banner.style.display = 'none';
+      });
+    });
+
+    document.getElementById('pwa-dismiss-btn').addEventListener('click', function() {
+      _banner.style.display = 'none';
+      sessionStorage.setItem('pwa-dismissed', '1');
+    });
+
+    window.addEventListener('appinstalled', function() {
+      _banner.style.display = 'none';
+    });
+  </script>
 </body>
 </html>
